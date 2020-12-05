@@ -1,7 +1,7 @@
 open Printf
 
 type t = Nothing
-       | Num of int
+       | Num of float
        | Atom of string
        | Str of string
        | Bol of bool
@@ -14,7 +14,7 @@ type t = Nothing
 let rec print_value (v: t): unit =
   match v with
   | Nothing -> printf "none"
-  | Num n -> printf "%d" n
+  | Num n -> printf "%f" n
   | Atom a -> printf "%s" a
   | Str s -> printf "%s" s
   | Bol b -> printf "%s" (if b then "#t" else "#f")

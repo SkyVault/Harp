@@ -2,7 +2,7 @@ open Printf
 open Value
 open Eval
 
-let std_bin_op (op: int -> int -> int) (start: int) (env: Value.t) (list: Value.t): Value.t * Value.t =
+let std_bin_op (op: float -> float -> float) (start: float) (env: Value.t) (list: Value.t): Value.t * Value.t =
   let apply a b =
     match (eval_expr env a, eval_expr env b) with
     | ((_, Num a'), (_, Num b')) -> Num (op a' b')
@@ -15,7 +15,7 @@ let std_bin_op (op: int -> int -> int) (start: int) (env: Value.t) (list: Value.
 let std_minus env list =
   let apply a b =
     match (eval_expr env a, eval_expr env b) with
-    | ((_, Num a'), (_, Num b')) -> Num (a' - b')
+    | ((_, Num a'), (_, Num b')) -> Num (a' -. b')
     | _ -> printf "Error cannot subtract"; print_value a; printf " with "; print_value b; Nothing
   in
     match list with
@@ -39,7 +39,7 @@ let std_def env list =
      let (_, result) = eval_expr env e in
      (env_update env (Atom a) result, result)
   | _ ->
-     printf "Def requires an atom and an expr"; exit 1
+     failwith "Def requires an atom and an expr"
 
 let std_if env list =
   match list with
@@ -55,7 +55,7 @@ let std_if env list =
      | Bol true -> let (_, res) = (eval_expr env ifTrue) in (env, res)
      | _ -> (env, Nothing)
     end
-  | _ -> printf "if error"; exit 1
+  | _ -> failwith "if error"
 
 let std_cond env list =
   let rec cond conds =
@@ -110,8 +110,8 @@ let std_println env list =
 let make_std_env =
   Env [
     (Atom "-", (NatFunc std_minus));
-    (Atom "+", (NatFunc (std_bin_op ( + ) 0)));
-    (Atom "*", (NatFunc (std_bin_op ( * ) 1)));
+    (Atom "+", (NatFunc (std_bin_op ( +. ) 0.)));
+    (Atom "*", (NatFunc (std_bin_op ( *. ) 1.)));
     (Atom "=", (NatFunc (std_cmp (=))));
     (Atom ">", (NatFunc (std_cmp (>))));
     (Atom "<", (NatFunc (std_cmp (<))));
