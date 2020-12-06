@@ -107,6 +107,27 @@ let std_println env list =
   printf "\n";
   (env, v)
 
+let std_push env list =
+    match list with
+    | List (seq::v::[]) -> begin
+        match (eval_expr env seq) with
+        | (_, Seq seq) ->
+            let (_, v') = eval_expr env v in
+            (env, Seq (v'::seq))
+        | _ -> failwith "push requires a seq as its first argument"
+    end
+    | _ -> failwith "std push error"
+
+let std_pop env list =
+    match list with
+    | List (seq::[]) -> begin
+        match (eval_expr env seq) with
+        | (_, Seq (_::seq)) -> (env, Seq (seq))
+        | (_, Seq []) -> (env, Seq [])
+        | _ -> failwith "push requires a seq as its first argument"
+    end
+    | _ -> failwith "std push error"
+
 let make_std_env =
   Env [
     (Atom "-", (NatFunc std_minus));
@@ -124,4 +145,6 @@ let make_std_env =
     (Atom "print", (NatFunc std_print));
     (Atom "println", (NatFunc std_println));
     (Atom "fun", (NatFunc std_fun));
+    (Atom "push", (NatFunc std_push));
+    (Atom "pop", (NatFunc std_pop));
   ]

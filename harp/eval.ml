@@ -23,6 +23,7 @@ let rec eval_expr (env: Value.t) (expr: Value.t): Value.t * Value.t=
     | Num a -> (env, Num a)
     | Str s -> (env, Str s)
     | Bol b -> (env, Bol b)
+    | Seq e -> (env, Seq e)
     | Atom "else" -> (env, Atom "else")
     | Atom a -> begin
         match (env_find env (Atom a)) with

@@ -6,6 +6,7 @@ type t = Nothing
        | Str of string
        | Bol of bool
        | List of t list
+       | Seq of t list (* Userland expanding vector *)
        | Progn of t list
        | Func of (t list * t * t) (* (args * env * list) *)
        | NatFunc of (t -> t -> t * t) (* env -> list -> env * value *)
@@ -22,9 +23,9 @@ let rec print_value (v: t): unit =
   | Func _ -> printf "<func>"
   | NatFunc _ -> printf "<nat-func>"
   | List e ->
-      printf "(";
-      List.iter (fun v -> print_value v; printf " ") e;
-      printf ")"
+      printf "("; List.iter (fun v -> print_value v; printf " ") e; printf ")"
+  | Seq e ->
+      printf "["; List.iter (fun v -> print_value v; printf " ") e; printf "]"
   | Progn e ->
       printf "(";
       List.iter (fun v -> print_value v; printf " ") e;

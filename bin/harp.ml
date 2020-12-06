@@ -16,7 +16,11 @@ let rec repl env =
     repl env'
 
 let () =
-  let tokens = tokenize "-3.1415926" in
-  List.iter print_tok_ws tokens;
-
-  repl (Std.make_std_env)
+  match (Array.to_list Sys.argv) with
+  | _::script::[] ->
+    let text = Common.read_whole_file script in
+    let env = (Std.make_std_env) in
+    text |> tokenize |> parse_progn |> eval_progn env |> ignore
+    (* let (env', _) = text |> tokenize |> parse_progn |> eval_progn env in *)
+    (* repl env' *)
+  | _ -> repl (Std.make_std_env)

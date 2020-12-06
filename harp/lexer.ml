@@ -15,6 +15,8 @@ type token = TNum of float
            | TStr of string
            | TOpenParen
            | TCloseParen
+           | TOpenBracket
+           | TCloseBracket
 
 let print_token = function
   | TNum n -> printf "TNum %f" n
@@ -23,6 +25,8 @@ let print_token = function
   | TBol b -> printf "TBol %s" (if b then "#t" else "#f")
   | TOpenParen -> printf "("
   | TCloseParen -> printf ")"
+  | TOpenBracket -> printf "["
+  | TCloseBracket -> printf "]"
 
 let print_tok_ws t = printf "<'"; print_token t; printf "'> "
 
@@ -51,14 +55,29 @@ let get_atom (cs: char list): token * char list =
     let s = ss |> reverse |> string_of_char_list in
     (TAtom s, rest)
 
+let get_str (cs: char list): token * char list =
+  let rec loop (cs: char list) (res: char list): char list * char list =
+    match cs with
+    | '"'::rest -> (res, rest)
+    | c::rest -> loop rest (c::res)
+    | [] -> failwith "Lexer error, missing closing '\"'"
+  in
+    let (str, rest) = loop cs [] in
+    (TStr (str |> reverse |> string_of_char_list), rest)
+
 let tokenize (s: string): token list =
   let rec loop (s: char list) (res: token list): token list =
     match s with
     | [] -> res
     | '('::rest -> loop rest (TOpenParen::res)
     | ')'::rest -> loop rest (TCloseParen::res)
+    | '['::rest -> loop rest (TOpenBracket::res)
+    | ']'::rest -> loop rest (TCloseBracket::res)
     | '#'::'t'::rest -> loop rest (TBol true::res)
     | '#'::'f'::rest -> loop rest (TBol false::res)
+    | '"'::rest ->
+      let (tok, rest') = get_str rest in
+      loop rest' (tok::res)
     | '-'::n::rest when is_digit n -> begin
       match (n::rest) |> get_number with
       | (TNum v, rest') -> loop rest' (TNum (v *. -1.)::res)
