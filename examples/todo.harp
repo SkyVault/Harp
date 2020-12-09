@@ -1,0 +1,27 @@
+(def todos [])
+
+(fun add-todo ()
+     (def descr (readln "description: "))
+     (push todos descr))
+
+(fun list-todos ()
+     (fun loop (n)
+        (if (< n (len todos)) (do
+            (print )))))
+
+(fun main-loop ()
+  (def input (readln ":"))
+  (cond (= input "q") 0
+        (= input "a") (do
+           (add-todo)
+           (main-loop))
+        (= input "l") (do
+           (list-todos)
+           (main-loop))
+        else (main-loop)))
+
+(fun get-list () [1 2 3])
+
+(push (get-list) 32)
+
+(main-loop)

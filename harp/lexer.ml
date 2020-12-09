@@ -9,14 +9,26 @@ let char_to_digit chr = float_of_int (Char.code chr - Char.code '0')
 let string_of_char_list = List.to_seq >> String.of_seq
 let float_of_char_list = string_of_char_list >> float_of_string
 
-type token = TNum of float
-           | TAtom of string
-           | TBol of bool
-           | TStr of string
-           | TOpenParen
-           | TCloseParen
-           | TOpenBracket
-           | TCloseBracket
+(* type token_value *)
+type token_value
+  = TNum of float
+  | TAtom of string
+  | TBol of bool
+  | TStr of string
+  | TOpenParen
+  | TCloseParen
+  | TOpenBracket
+  | TCloseBracket
+
+type token_info = int * int
+
+type token = token_value * token_info
+
+let make_tok (v) (i) : token = (v, i)
+
+(* type position = int * int (\* line * column *\)
+ *
+ * type token = { v : token_value; pos : position } *)
 
 let print_token = function
   | TNum n -> printf "TNum %f" n
@@ -30,7 +42,7 @@ let print_token = function
 
 let print_tok_ws t = printf "<'"; print_token t; printf "'> "
 
-let get_number (cs: char list): token * char list =
+let get_number (cs: char list): token_value * char list =
   let rec loop (cs: char list) (decimal: bool) (res: char list): char list * char list =
     match cs with
     | [] -> (res, [])
@@ -44,7 +56,7 @@ let get_number (cs: char list): token * char list =
     let num = ns |> reverse |> float_of_char_list in
     (TNum num, rest)
 
-let get_atom (cs: char list): token * char list =
+let get_atom (cs: char list): token_value * char list =
   let rec loop (cs: char list) (res: char list): char list * char list =
     match cs with
     | [] -> (res, [])
@@ -55,7 +67,7 @@ let get_atom (cs: char list): token * char list =
     let s = ss |> reverse |> string_of_char_list in
     (TAtom s, rest)
 
-let get_str (cs: char list): token * char list =
+let get_str (cs: char list): token_value * char list =
   let rec loop (cs: char list) (res: char list): char list * char list =
     match cs with
     | '"'::rest -> (res, rest)
@@ -66,29 +78,29 @@ let get_str (cs: char list): token * char list =
     (TStr (str |> reverse |> string_of_char_list), rest)
 
 let tokenize (s: string): token list =
-  let rec loop (s: char list) (res: token list): token list =
+  let rec loop (s: char list) (res: token list) (info: token_info): token list =
     match s with
     | [] -> res
-    | '('::rest -> loop rest (TOpenParen::res)
-    | ')'::rest -> loop rest (TCloseParen::res)
-    | '['::rest -> loop rest (TOpenBracket::res)
-    | ']'::rest -> loop rest (TCloseBracket::res)
-    | '#'::'t'::rest -> loop rest (TBol true::res)
-    | '#'::'f'::rest -> loop rest (TBol false::res)
+    | '('::rest -> loop rest ((make_tok TOpenParen info)::res) info
+    | ')'::rest -> loop rest ((make_tok TCloseParen info)::res) info
+    | '['::rest -> loop rest ((make_tok TOpenBracket info)::res) info
+    | ']'::rest -> loop rest ((make_tok TCloseBracket info)::res) info
+    | '#'::'t'::rest -> loop rest ((make_tok (TBol true) info)::res) info
+    | '#'::'f'::rest -> loop rest ((make_tok (TBol false) info)::res) info
     | '"'::rest ->
       let (tok, rest') = get_str rest in
-      loop rest' (tok::res)
+      loop rest' ((make_tok tok info)::res) info
     | '-'::n::rest when is_digit n -> begin
       match (n::rest) |> get_number with
-      | (TNum v, rest') -> loop rest' (TNum (v *. -1.)::res)
+      | (TNum v, rest') -> loop rest' ((make_tok (TNum (v *. -1.)) info::res)) info
       | _ -> failwith "number lexer failure"
     end
     | n::rest when is_digit n ->
        let (tok, rest') = (n::rest) |> get_number in
-       loop rest' (tok::res)
+       loop rest' ((make_tok tok info)::res) info
     | c::rest when not (is_ws c) ->
        let (tok, rest') = (c::rest) |> get_atom in
-       loop rest' (tok::res)
-    | _::rest -> loop rest res
+       loop rest' ((make_tok tok info)::res) info
+    | _::rest -> loop rest res info
   in
-    loop (explode s) [] |> reverse
+    loop (explode s) [] (0, 0) |> reverse

@@ -1,30 +1,47 @@
 open Printf
+open Lexer
 
 type t = Nothing
-       | Num of float
-       | Atom of string
-       | Str of string
-       | Bol of bool
-       | List of t list
-       | Seq of t list (* Userland expanding vector *)
+       | Num of float * token_info
+       | Atom of string * token_info
+       | Str of string * token_info
+       | Bol of bool * token_info
+       | List of t list * token_info
+       | Seq of t list * token_info (* Userland expanding vector *)
        | Progn of t list
-       | Func of (t list * t * t) (* (args * env * list) *)
+       | Func of (t list * t * t) * token_info (* (args * env * list) *)
        | NatFunc of (t -> t -> t * t) (* env -> list -> env * value *)
-       | Env of (t * t) list
+       | Env of ((t * t) list)
+
+let get_token_info v =
+  match v with
+  | Nothing -> (0, 0)
+  | Num (_, i) -> i
+  | Atom (_, i) -> i
+  | Str (_, i) -> i
+  | Bol (_, i) -> i
+  | Env _ -> (0, 0)
+  | Func (_, i) -> i
+  | NatFunc _ -> (0, 0)
+  | List (_, i) -> i
+  | Seq (_, i) -> i
+  | Progn _ -> (0, 0)
 
 let rec print_value (v: t): unit =
   match v with
   | Nothing -> printf "none"
-  | Num n -> printf "%f" n
-  | Atom a -> printf "%s" a
-  | Str s -> printf "%s" s
-  | Bol b -> printf "%s" (if b then "#t" else "#f")
-  | Env _ -> printf "<env>"
+  | Num (n, _) -> printf "%f" n
+  | Atom (a, _) -> printf "%s" a
+  | Str (s, _) -> printf "%s" s
+  | Bol (b, _) -> printf "%s" (if b then "#t" else "#f")
+  | Env list ->
+    List.iter (fun (k, v) ->
+      print_value k; printf " "; print_value v; printf "\n") list
   | Func _ -> printf "<func>"
   | NatFunc _ -> printf "<nat-func>"
-  | List e ->
+  | List (e, _) ->
       printf "("; List.iter (fun v -> print_value v; printf " ") e; printf ")"
-  | Seq e ->
+  | Seq (e, _) ->
       printf "["; List.iter (fun v -> print_value v; printf " ") e; printf "]"
   | Progn e ->
       printf "(";
@@ -50,8 +67,12 @@ let env_put env key value =
 let env_update env key value =
   match env with
   | Env list ->
-    let newList = List.filter (fun (k, _) -> k <> key) list in
-    env_put (Env newList) key value
+    let newList =
+        list |> List.map (fun (key', value') ->
+                    if key' = key then (key, value)
+                    else (key', value'))
+    in
+      (Env newList)
   | _ -> env
 
 let rec env_merge env list =

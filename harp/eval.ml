@@ -5,9 +5,9 @@ open Value
 let rec eval_expr (env: Value.t) (expr: Value.t): Value.t * Value.t=
   let func_call env atom args =
     match (eval_expr env atom) with
-    | (_, NatFunc fn) -> fn env (List args)
-    | (_, Func (params, fenv, progn)) ->
-      let func = (Func (params, fenv, progn)) in
+    | (_, NatFunc fn) -> fn env (List (args, (0, 0)))
+    | (_, Func ((params, fenv, progn), i)) ->
+      let func = (Func ((params, fenv, progn), i)) in
       let evalued = List.map (fun a -> evalV env a) args in
       let zipped = (zip (params, evalued)) in
       let env' = (env_merge fenv zipped) in
@@ -17,20 +17,25 @@ let rec eval_expr (env: Value.t) (expr: Value.t): Value.t * Value.t=
        printf "Cannot find function in the environment: ";
        print_value atom;
        (env, Nothing)
-    | (_, v) -> printf "Cannot apply ("; print_value v; printf ")\n"; (env, Nothing)
+    | (_, v) ->
+      let (line, chr) = get_token_info v in
+      printf "(%d, %d) Cannot apply (" line chr;
+      print_value v;
+      printf ")\n";
+      (env, Nothing)
   in
     match expr with
-    | Num a -> (env, Num a)
-    | Str s -> (env, Str s)
-    | Bol b -> (env, Bol b)
-    | Seq e -> (env, Seq e)
-    | Atom "else" -> (env, Atom "else")
-    | Atom a -> begin
-        match (env_find env (Atom a)) with
+    | Num (a, i) -> (env, Num (a, i))
+    | Str (s, i) -> (env, Str (s, i))
+    | Bol (b, i) -> (env, Bol (b, i))
+    | Seq (e, i) -> (env, Seq (e, i))
+    | Atom ("else", i) -> (env, Atom ("else", i))
+    | Atom (a, i) -> begin
+        match (env_find env (Atom (a, i))) with
         | Some v -> (env, v)
         | None -> (env, Nothing)
       end
-    | List (callable::args) -> func_call env callable args
+    | List (callable::args, _) -> func_call env callable args
     | _ -> (env, Nothing)
 
 and evalV (e: Value.t) (v: Value.t): Value.t =

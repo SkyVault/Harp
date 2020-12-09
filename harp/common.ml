@@ -21,3 +21,5 @@ let read_whole_file filename =
     let s = really_input_string ch (in_channel_length ch) in
     close_in ch;
     s
+
+(* let syntax_error  *)
