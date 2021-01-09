@@ -1,5 +1,1 @@
-(fun fib (n)
-  (cond (= n 0) 1
-        (= n 1) 1
-        else (+ (fib (- n 1)) (fib (- n 2)))))
-(print (fib 30))
+let a = 32 + (3 * 2.0) / 2.0

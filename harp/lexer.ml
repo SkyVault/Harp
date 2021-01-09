@@ -15,10 +15,13 @@ type token_value
   | TAtom of string
   | TBol of bool
   | TStr of string
+  | TKeyWord of string
   | TOpenParen
   | TCloseParen
   | TOpenBracket
   | TCloseBracket
+  | TOpenBrace
+  | TCloseBrace
 
 type token_info = int * int
 
@@ -32,15 +35,18 @@ let make_tok (v) (i) : token = (v, i)
 
 let print_token = function
   | TNum n -> printf "TNum %f" n
-  | TAtom a -> printf "TAtom %s" a
+  | TAtom a -> printf "TAtom '%s'" a
   | TStr s -> printf "TStr %s" s
   | TBol b -> printf "TBol %s" (if b then "#t" else "#f")
+  | TKeyWord s -> printf "TKeyWord %s" s
   | TOpenParen -> printf "("
   | TCloseParen -> printf ")"
   | TOpenBracket -> printf "["
   | TCloseBracket -> printf "]"
+  | TOpenBrace -> printf "{"
+  | TCloseBrace -> printf "}"
 
-let print_tok_ws t = printf "<'"; print_token t; printf "'> "
+let print_tok_ws t = printf "<'"; print_token t; printf "'>\n"
 
 let get_number (cs: char list): token_value * char list =
   let rec loop (cs: char list) (decimal: bool) (res: char list): char list * char list =
@@ -81,10 +87,14 @@ let tokenize (s: string): token list =
   let rec loop (s: char list) (res: token list) (info: token_info): token list =
     match s with
     | [] -> res
+    | c::rest when (is_ws c) ->
+       loop rest res info
     | '('::rest -> loop rest ((make_tok TOpenParen info)::res) info
     | ')'::rest -> loop rest ((make_tok TCloseParen info)::res) info
     | '['::rest -> loop rest ((make_tok TOpenBracket info)::res) info
     | ']'::rest -> loop rest ((make_tok TCloseBracket info)::res) info
+    | '{'::rest -> loop rest ((make_tok TOpenBrace info)::res) info
+    | '}'::rest -> loop rest ((make_tok TCloseBrace info)::res) info
     | '#'::'t'::rest -> loop rest ((make_tok (TBol true) info)::res) info
     | '#'::'f'::rest -> loop rest ((make_tok (TBol false) info)::res) info
     | '"'::rest ->
@@ -101,6 +111,8 @@ let tokenize (s: string): token list =
     | c::rest when not (is_ws c) ->
        let (tok, rest') = (c::rest) |> get_atom in
        loop rest' ((make_tok tok info)::res) info
-    | _::rest -> loop rest res info
+    | c::rest ->
+       printf "Unhandled token '%c'\n" c;
+       loop rest res info
   in
     loop (explode s) [] (0, 0) |> reverse

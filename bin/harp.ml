@@ -1,7 +1,7 @@
 open Printf
 open Harp
 open Harp.Lexer
-open Harp.Parser
+open Harp.Sexpr
 open Harp.Value
 open Harp.Eval
 
@@ -19,8 +19,10 @@ let () =
   match (Array.to_list Sys.argv) with
   | _::script::[] ->
     let text = Common.read_whole_file script in
-    let env = (Std.make_std_env) in
-    text |> tokenize |> parse_progn |> eval_progn env |> ignore
+    (* let env = (Std.make_std_env) in
+     * text |> tokenize |> parse_progn |> eval_progn env |> ignore *)
     (* let (env', _) = text |> tokenize |> parse_progn |> eval_progn env in *)
     (* repl env' *)
+
+    text |> tokenize |> Parser.parse |> print_value
   | _ -> repl (Std.make_std_env)
