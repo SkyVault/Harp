@@ -97,14 +97,14 @@ let tokenize (s: string): token list =
     | '}'::rest -> loop rest ((make_tok TCloseBrace info)::res) info
     | '#'::'t'::rest -> loop rest ((make_tok (TBol true) info)::res) info
     | '#'::'f'::rest -> loop rest ((make_tok (TBol false) info)::res) info
+    | '!'::rest -> loop rest ((make_tok (TAtom "!") info)::res) info
+    | '-'::rest -> loop rest ((make_tok (TAtom "-") info)::res) info
+    | '*'::rest -> loop rest ((make_tok (TAtom "*") info)::res) info
+    | '/'::rest -> loop rest ((make_tok (TAtom "/") info)::res) info
+    | '+'::rest -> loop rest ((make_tok (TAtom "+") info)::res) info
     | '"'::rest ->
       let (tok, rest') = get_str rest in
       loop rest' ((make_tok tok info)::res) info
-    | '-'::n::rest when is_digit n -> begin
-      match (n::rest) |> get_number with
-      | (TNum v, rest') -> loop rest' ((make_tok (TNum (v *. -1.)) info::res)) info
-      | _ -> failwith "number lexer failure"
-    end
     | n::rest when is_digit n ->
        let (tok, rest') = (n::rest) |> get_number in
        loop rest' ((make_tok tok info)::res) info
