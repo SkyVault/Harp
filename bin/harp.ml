@@ -12,6 +12,7 @@ open Harp.Lexer
  *     repl env'
  *)
  let () =
+    Printf.printf "\n";
     match (Array.to_list Sys.argv) with
     | _::script::[] ->
       let text = Common.read_whole_file script in

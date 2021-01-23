@@ -15,14 +15,22 @@ type node =
   | Unary of unary * node
   | Factor of factor * node * node
   | Term of term * node * node
-  | Comparison of node * (comparison * node) list
-  | Equality of node * (equality * node) list
+  | Range of node * node
+  | Comparison of comparison * node * node
+  | Equality of equality * node * node
+  | LetExpr of node * node (* Name -> Value *)
+  | IfExpr of node * node (* Expr -> Progn *)
+  | List of node list
+  | Fun of node * node * node (* Atom Args Progn *)
+  | Progn of node list
   | Expression of node
 
-let cat_strings = List.fold_left (fun a b -> a ^ b) ""
+let cat_strings = List.fold_left (fun a b -> a ^ " " ^ b) ""
 let unary_to_str = function | Neg -> "-" | Bang -> "!"
 let factor_to_str = function | Div -> "/" | Mul -> "*"
 let term_to_str = function | Minus -> "-" | Plus -> "+"
+let comp_to_str = function | Gr -> ">" | Gre -> ">=" | Le -> "<" | Lee -> "<="
+let eq_to_str = function | Eq -> "=" | Neq -> "~="
 
 let rec list_to_str (asts : node list) : string =
   asts |> List.map (to_str) |> cat_strings
@@ -35,6 +43,14 @@ and to_str (ast : node) : string =
   | BolValue b -> sprintf "%s" (if b then "#t" else "#f")
   | Unary (u, ast') -> sprintf "%s%s" (unary_to_str u) (to_str ast')
   | Factor (f, a, b) -> sprintf "(%s %s %s)" (factor_to_str f) (to_str a) (to_str b)
-  | Term (t, a, b) -> sprintf "[%s %s %s]" (term_to_str t) (to_str a) (to_str b)
+  | Term (t, a, b) -> sprintf "(%s %s %s)" (term_to_str t) (to_str a) (to_str b)
+  | Range (min, max) -> sprintf "(%s..%s)" (to_str min) (to_str max)
+  | Comparison (t, a, b) -> sprintf "(%s %s %s)" (comp_to_str t) (to_str a) (to_str b)
+  | Equality (t, a, b) -> sprintf "(%s %s %s)" (eq_to_str t) (to_str a) (to_str b)
+  | LetExpr (name, value) -> sprintf "(let %s %s)" (to_str name) (to_str value)
+  | IfExpr (expr, progn) -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
+  | Fun (atom, args, progn) -> sprintf "<fun %s %s %s>" (to_str atom) (to_str args) (to_str progn)
+  | Progn ns -> sprintf "{%s}" (list_to_str ns)
+  | List ns -> sprintf "[%s]" (list_to_str ns)
   | Terminal -> "EOF"
   | _ -> ""

@@ -1,19 +1,24 @@
 
-type Player = { x, y }
+type Player { x, y }
 
-let dict = { "test": 100, "dict": 20 }
+let dict := { "test": 100, "dict": 20 }
+let list := [1 2 3]
 
-fun add (a, b) (a + b)
+fun add [a b] (a + b)
 
-let a = 32
-let test = (a + 1)
+let a := 32
+let test := (a + 1)
+
+if a == b (
+   b + 2
+)
 
 each i in 0..100 (
     print(i + 100)
 )
 
-fun update_player (player) (
-    let dt = get_frame_time(),
-    let x = player.x + 100 * dt,
+fun update_player [player] (
+    let dt := get_frame_time(),
+    let x := player.x + 100 * dt,
     { player | x = x } # Functional update
 )
