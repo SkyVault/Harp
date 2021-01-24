@@ -27,9 +27,6 @@ let rec parse_let_expr (ts: token list): Ast.node * token list =
      (LetExpr (AtomValue a, expr), rest')
   | _ -> failwith "Malformed let expression"
 
-(* and parse_range (ts: token list): Ast.node * token list =
- *   match ts with *)
-
 and parse_if_expr (ts: token list): Ast.node * token list =
   match ts with
   | [] -> failwith "Empty if expression"

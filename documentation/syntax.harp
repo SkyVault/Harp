@@ -22,3 +22,5 @@ fun update_player [player] (
     let x := player.x + 100 * dt,
     { player | x = x } # Functional update
 )
+
+print["Hello World"]
