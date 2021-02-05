@@ -1,5 +1,4 @@
-if true (
-  false
-) else (
-  true
-)
+let a := 32
+let b := 123
+let c := 100
+print[a + b / c]

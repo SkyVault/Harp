@@ -55,6 +55,10 @@ and parse_fun_def (ts: token list): Ast.node * token list =
      | (AtomValue _, List _, Progn _) -> (Fun (atom, args, body), rest')
      | _ -> failwith "Function definition requires an atom, list of args and a progn"
 
+and parse_fun_call (name : Ast.node) (ts : token list) =
+  let (params, rest) = parse_list ts in
+  (FunCall (name, params), rest)
+
 and parse_list (ts: token list): Ast.node * token list =
   let rec collect ts ns =
     match ts with
@@ -92,6 +96,8 @@ and parse_expr (ts: token list): Ast.node * token list =
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
+  | (TAtom n,_)::(TOpenBracket,i)::rest ->
+    parse_fun_call (AtomValue n) ((TOpenBracket, i)::rest)
   | (TOpenBracket, _)::_ -> parse_list ts
   (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
   | _ -> parse_equality ts

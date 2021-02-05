@@ -29,6 +29,22 @@ and fun_to_lua it atom args progn =
       sprintf "local %s = function(%s)\nreturn %s\nend" (a) args_str (progn_to_lua it ps ~ret:false)
     | _ -> failwith "fun_to_lua malformed function"
 
+and fun_call_to_lua it atom args =
+  let rec args_loop args build =
+    match args with
+    | expr::[] -> (expr_to_lua it expr)::build
+    | expr::rest ->
+      args_loop rest (List.append [(sprintf "%s," (expr_to_lua it expr))] build)
+    | [] -> build
+  in
+    match (atom, args) with
+    | (AtomValue a, List ns) ->
+      (* NOTE: We need to prepend return to the last value in the progn *)
+      let args_str = (args_loop ns []) |> reverse |> cat_strings in
+      sprintf "%s(%s)" a args_str
+    | _ -> failwith "fun_to_lua malformed function"
+
+
 and if_to_lua it expr progn else' =
   match progn with
   | Progn ns -> begin
@@ -69,6 +85,7 @@ and expr_to_lua it (expr : node) : string =
     sprintf "local %s = %s" (expr_to_lua it ident) (expr_to_lua it expr')
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else'
   | Fun (atom', args', progn') ->  fun_to_lua it atom' args' progn'
+  | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
 
@@ -85,5 +102,5 @@ and progn_to_lua it (ns : node list) ~ret : string =
 let ast_to_lua (ast : Ast.node) : string =
   let it = { indent = 0; scope_top = []; is_expr = false } in
   match ast with
-  | Progn ns -> progn_to_lua it ns ~ret:false
+  | Progn ns -> progn_to_lua it ns ~ret:true
   | _ -> failwith "Ast to lua expects a progn at the top"

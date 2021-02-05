@@ -23,6 +23,7 @@ type node =
   | IfExpr of node * node * node option (* Expr -> Progn *)
   | List of node list
   | Fun of node * node * node (* Atom Args Progn *)
+  | FunCall of node * node (* Atom Params *)
   | Progn of node list
   | Expression of node
 
@@ -58,7 +59,8 @@ and to_str (ast : node) : string =
     | _ -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
   end
   | Fun (atom, args, progn) -> sprintf "<fun %s %s %s>" (to_str atom) (to_str args) (to_str progn)
+  | FunCall (atom, params) -> sprintf "<%s>(%s)" (to_str atom) (to_str params)
   | Progn ns -> sprintf "{%s }" (list_to_str ns)
   | List ns -> sprintf "[%s]" (list_to_str ns)
   | Terminal -> "EOF"
-  | _ -> ""
+  | _ -> failwith "Unhandled ast type in to_str"
