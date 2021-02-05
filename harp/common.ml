@@ -3,6 +3,8 @@ let (>>) f g x = g(f(x))
 let (>>|) r f = Result.map f r
 let (>>=) r f = Result.bind r f
 
+let cat_strings = List.fold_left (fun a b -> a ^ " " ^ b) ""
+
 let rec zip paired_lists =
   match paired_lists with
   | [], [] -> []

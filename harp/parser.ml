@@ -34,7 +34,14 @@ and parse_if_expr (ts: token list): Ast.node * token list =
      let (expr, rest') = parse_expr ts in
      let (progn, rest') = parse_progn rest' in
      match progn with
-     | Progn _ -> (IfExpr (expr, progn), rest')
+     | Progn _ -> begin
+        match rest' with
+        | (TAtom "else", _)::(TOpenParen, i)::rest2 ->
+          let (elseProgn, rest3) = parse_progn ((TOpenParen, i)::rest2) in
+          (IfExpr (expr, progn, Some elseProgn), rest3)
+        | _ ->
+          (IfExpr (expr, progn, None), rest')
+      end
      | _ -> failwith "if expected a progn after the expression"
 
 and parse_fun_def (ts: token list): Ast.node * token list =

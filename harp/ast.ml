@@ -1,4 +1,5 @@
 open Printf
+open Common
 
 type equality = Neq | Eq
 type comparison = Gr | Gre | Le | Lee
@@ -19,21 +20,23 @@ type node =
   | Comparison of comparison * node * node
   | Equality of equality * node * node
   | LetExpr of node * node (* Name -> Value *)
-  | IfExpr of node * node (* Expr -> Progn *)
+  | IfExpr of node * node * node option (* Expr -> Progn *)
   | List of node list
   | Fun of node * node * node (* Atom Args Progn *)
   | Progn of node list
   | Expression of node
 
-let cat_strings = List.fold_left (fun a b -> a ^ " " ^ b) ""
 let unary_to_str = function | Neg -> "-" | Bang -> "!"
 let factor_to_str = function | Div -> "/" | Mul -> "*"
 let term_to_str = function | Minus -> "-" | Plus -> "+"
 let comp_to_str = function | Gr -> ">" | Gre -> ">=" | Le -> "<" | Lee -> "<="
-let eq_to_str = function | Eq -> "=" | Neq -> "~="
+let eq_to_str = function | Eq -> "==" | Neq -> "~="
 
 let rec list_to_str (asts : node list) : string =
   asts |> List.map (to_str) |> cat_strings
+
+and list_to_str_app (asts : node list) (append : string) : string =
+  asts |> List.map (fun s -> (s |> to_str) ^ append) |> cat_strings
 
 and to_str (ast : node) : string =
   match ast with
@@ -48,9 +51,14 @@ and to_str (ast : node) : string =
   | Comparison (t, a, b) -> sprintf "(%s %s %s)" (comp_to_str t) (to_str a) (to_str b)
   | Equality (t, a, b) -> sprintf "(%s %s %s)" (eq_to_str t) (to_str a) (to_str b)
   | LetExpr (name, value) -> sprintf "(let %s %s)" (to_str name) (to_str value)
-  | IfExpr (expr, progn) -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
+  | IfExpr (expr, progn, el) -> begin
+    match el with
+    | Some elseProgn ->
+      sprintf "(if %s %s %s)" (to_str expr) (to_str progn) (to_str elseProgn)
+    | _ -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
+  end
   | Fun (atom, args, progn) -> sprintf "<fun %s %s %s>" (to_str atom) (to_str args) (to_str progn)
-  | Progn ns -> sprintf "{%s}" (list_to_str ns)
+  | Progn ns -> sprintf "{%s }" (list_to_str ns)
   | List ns -> sprintf "[%s]" (list_to_str ns)
   | Terminal -> "EOF"
   | _ -> ""

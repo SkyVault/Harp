@@ -15,6 +15,11 @@ open Harp.Lexer
     Printf.printf "\n";
     match (Array.to_list Sys.argv) with
     | _::script::[] ->
-      let text = Common.read_whole_file script in
-      text |> tokenize |> Parser.parse |> Ast.to_str |> Printf.printf "\n%s\n"
+      let ast =
+        Common.read_whole_file script
+        |> tokenize
+        |> Parser.parse
+      in
+        ast |> Ast.to_str |> Printf.printf "\n<<AST>>\n%s\n";
+        ast |> Luagen.ast_to_lua |> Printf.printf "\n<<LUA>>\n%s\n"
     | _ -> ()
