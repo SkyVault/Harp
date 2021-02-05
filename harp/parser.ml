@@ -37,8 +37,8 @@ and parse_if_expr (ts: token list): Ast.node * token list =
      match progn with
      | Progn _ -> begin
         match rest' with
-        | (TAtom "else", _)::(TOpenParen, i)::rest2 ->
-          let (elseProgn, rest3) = parse_progn ((TOpenParen, i)::rest2) in
+        | (TAtom "else", _)::(TOpenBrace, i)::rest2 ->
+          let (elseProgn, rest3) = parse_progn ((TOpenBrace, i)::rest2) in
           (IfExpr (expr, progn, Some elseProgn), rest3)
         | _ ->
           (IfExpr (expr, progn, None), rest')
@@ -65,22 +65,6 @@ and parse_fun_call (name : Ast.node) (ts : token list) =
 and parse_list (ts: token list): Ast.node * token list =
   let rec collect ts ns =
     match ts with
-    | (TCloseBracket, _)::rest -> (reverse ns, rest)
-    | [] -> failwith "Unbalanced brackets"
-    | _ ->
-       let (n, rest) = parse_expr ts in
-       let new_list = n::ns in
-       (collect rest new_list)
-  in
-  match ts with
-  | (TOpenBracket, _)::rest ->
-     let (ns, rest') = collect rest [] in
-     (List ns, rest')
-  | _ -> parse_expr ts
-
-and parse_progn (ts: token list): Ast.node * token list =
-  let rec collect ts ns =
-    match ts with
     | (TCloseParen, _)::rest -> (reverse ns, rest)
     | [] -> failwith "Unbalanced parens"
     | _ ->
@@ -91,6 +75,22 @@ and parse_progn (ts: token list): Ast.node * token list =
   match ts with
   | (TOpenParen, _)::rest ->
      let (ns, rest') = collect rest [] in
+     (List ns, rest')
+  | _ -> parse_expr ts
+
+and parse_progn (ts: token list): Ast.node * token list =
+  let rec collect ts ns =
+    match ts with
+    | (TCloseBrace, _)::rest -> (reverse ns, rest)
+    | [] -> failwith "Unbalanced parens"
+    | _ ->
+       let (n, rest) = parse_expr ts in
+       let new_list = n::ns in
+       (collect rest new_list)
+  in
+  match ts with
+  | (TOpenBrace, _)::rest ->
+     let (ns, rest') = collect rest [] in
      (Progn ns, rest')
   | _ -> parse_expr ts
 
@@ -99,9 +99,9 @@ and parse_expr (ts: token list): Ast.node * token list =
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
-  | (TAtom n,_)::(TOpenBracket,i)::rest ->
-    parse_fun_call (AtomValue n) ((TOpenBracket, i)::rest)
-  | (TOpenBracket, _)::_ -> parse_list ts
+  | (TAtom n,_)::(TOpenParen,i)::rest ->
+    parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
+  | (TOpenParen, _)::_ -> parse_list ts
   (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
   | _ -> parse_equality ts
 
@@ -165,7 +165,7 @@ and parse_primary (ts: token list): Ast.node * token list =
   | (TStr s, _)::rest -> (StrValue s, rest)
   | (TBol b, _)::rest -> (BolValue b, rest)
   | (TAtom a, _)::rest -> (AtomValue a, rest)
-  | (TOpenParen, _)::_ -> parse_progn ts
+  | (TOpenBrace, _)::_ -> parse_progn ts
   | (t,_)::_ ->
      failwith (sprintf "Illegal terminal token '%s'" (tok_to_str t))
   | _ -> failwith "Empty list"
@@ -173,6 +173,6 @@ and parse_primary (ts: token list): Ast.node * token list =
 let parse (ts: token list): Ast.node =
   ts |> List.iter (fun (t,_) -> (printf ">%s\n" (tok_to_str t)));
   (* Wrap the token list in parens to make it a progn *)
-  let wrapped = (TOpenParen, (0, 0))::ts@[(TCloseParen, (0, 0))] in
+  let wrapped = (TOpenBrace, (0, 0))::ts@[(TCloseBrace, (0, 0))] in
   let (v, _) = parse_progn wrapped in
   v
