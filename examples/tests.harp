@@ -1,4 +1,5 @@
-fun addIf [expr a b el] (
-  fun add [a b] (a + b)
-  if expr (add [a b]) else (el)
+if true (
+  false
+) else (
+  true
 )
