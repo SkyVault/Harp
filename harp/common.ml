@@ -22,9 +22,12 @@ let pop_last is =
   let rev = reverse is in ((List.tl rev |> reverse), List.hd rev)
 
 let read_whole_file filename =
-    let ch = open_in filename in
-    let s = really_input_string ch (in_channel_length ch) in
-    close_in ch;
-    s
+  let ch = open_in filename in
+  let s = really_input_string ch (in_channel_length ch) in
+  close_in ch;
+  s
 
-(* let syntax_error  *)
+let write_string_to_file filename content =
+  let oc = open_out filename in
+  Printf.fprintf oc "%s" content;
+  close_out oc

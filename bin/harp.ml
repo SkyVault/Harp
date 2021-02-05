@@ -11,15 +11,18 @@ open Harp.Lexer
  *     print_value result; printf "\n";
  *     repl env'
  *)
- let () =
-    Printf.printf "\n";
-    match (Array.to_list Sys.argv) with
-    | _::script::[] ->
-      let ast =
-        Common.read_whole_file script
-        |> tokenize
-        |> Parser.parse
-      in
-        ast |> Ast.to_str |> Printf.printf "\n<<AST>>\n%s\n";
-        ast |> Luagen.ast_to_lua |> Printf.printf "\n<<LUA>>\n%s\n"
-    | _ -> ()
+
+let () =
+  Printf.printf "\n";
+  match (Array.to_list Sys.argv) with
+  | _::script::[] ->
+    let ast =
+      Common.read_whole_file script
+      |> tokenize
+      |> Parser.parse
+    in
+      ast |> Ast.to_str |> Printf.printf "\n<<AST>>\n%s\n";
+      ast
+      |> Luagen.ast_to_lua
+      |> (fun s -> Common.write_string_to_file "out.lua" s)
+  | _ -> ()
