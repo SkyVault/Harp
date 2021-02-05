@@ -11,6 +11,8 @@ let rec handle_last_val_in_progn it last =
   match last with
   | LetExpr (AtomValue name,_) ->
     sprintf "%s\nreturn %s" (expr_to_lua it last) name
+  | Fun (AtomValue name,_,_) ->
+    sprintf "%s\nreturn %s" (expr_to_lua it last) name
   | _ -> sprintf "return %s" (expr_to_lua it last)
 
 and fun_to_lua it atom args progn =

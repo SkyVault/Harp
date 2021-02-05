@@ -3,6 +3,7 @@
 open Ast
 open Lexer
 open Common
+open Printf
 (* open Common *)
 
 (*
@@ -47,13 +48,15 @@ and parse_if_expr (ts: token list): Ast.node * token list =
 and parse_fun_def (ts: token list): Ast.node * token list =
   match ts with
   | [] -> failwith "Empty function definition"
-  | _ ->
-     let (atom, rest') = parse_expr ts in
+  | (TAtom a, _)::rest' -> begin
+     let atom = AtomValue a in
      let (args, rest') = parse_expr rest' in
      let (body, rest') = parse_progn rest' in
      match (atom, args, body) with
      | (AtomValue _, List _, Progn _) -> (Fun (atom, args, body), rest')
      | _ -> failwith "Function definition requires an atom, list of args and a progn"
+    end
+  | _ -> failwith "Function is missing a identifier"
 
 and parse_fun_call (name : Ast.node) (ts : token list) =
   let (params, rest) = parse_list ts in
@@ -164,10 +167,11 @@ and parse_primary (ts: token list): Ast.node * token list =
   | (TAtom a, _)::rest -> (AtomValue a, rest)
   | (TOpenParen, _)::_ -> parse_progn ts
   | (t,_)::_ ->
-     failwith (Printf.sprintf "Illegal terminal token (%s)" (tok_to_str t))
+     failwith (sprintf "Illegal terminal token '%s'" (tok_to_str t))
   | _ -> failwith "Empty list"
 
 let parse (ts: token list): Ast.node =
+  ts |> List.iter (fun (t,_) -> (printf ">%s\n" (tok_to_str t)));
   (* Wrap the token list in parens to make it a progn *)
   let wrapped = (TOpenParen, (0, 0))::ts@[(TCloseParen, (0, 0))] in
   let (v, _) = parse_progn wrapped in
