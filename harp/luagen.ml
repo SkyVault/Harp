@@ -7,6 +7,8 @@ type state =
   ; scope_top : string list
   ; is_expr : bool }
 
+let fn_wrap = sprintf "(function()\n%s\nend)()"
+
 let rec handle_last_val_in_progn it last =
   match last with
   | LetExpr (AtomValue name,_) ->
@@ -89,6 +91,7 @@ and expr_to_lua it (expr : node) : string =
   | Fun (atom', args', progn') ->  fun_to_lua it atom' args' progn'
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
+  | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
 
 and progn_to_lua it (ns : node list) ~ret : string =
