@@ -1,7 +1,1 @@
-let myValue := {
-  let a := 32
-  let b := 3
-  a + b
-}
 
-print(myValue)

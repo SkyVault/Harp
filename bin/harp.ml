@@ -1,17 +1,6 @@
 open Harp
 open Harp.Lexer
 
-(* let rec repl env =
- *   printf "> ";
- *   let line = read_line () in
- *   match line with
- *   | "" -> ()
- *   | _ ->
- *     let (env', result) = line |> tokenize |> parse_progn |> eval_progn env in
- *     print_value result; printf "\n";
- *     repl env'
- *)
-
 let () =
   Printf.printf "\n";
   match (Array.to_list Sys.argv) with
@@ -21,8 +10,9 @@ let () =
       |> tokenize
       |> Parser.parse
     in
-      ast |> Ast.to_str |> Printf.printf "\n<<AST>>\n%s\n";
-      ast
-      |> Luagen.ast_to_lua
-      |> (fun s -> Common.write_string_to_file "out.lua" s)
+      ast |> Ast.to_str |> Printf.printf "\n-=<{ AST OUT }>=-\n%s\n";
+
+      let lua = ast |> Luagen.ast_to_lua in
+      Printf.printf "\n-=<{ LUA OUT }>=-\n%s\n\n" lua;
+      Common.write_string_to_file "out.lua" lua
   | _ -> ()

@@ -171,7 +171,6 @@ and parse_primary (ts: token list): Ast.node * token list =
   | _ -> failwith "Empty list"
 
 let parse (ts: token list): Ast.node =
-  ts |> List.iter (fun (t,_) -> (printf ">%s\n" (tok_to_str t)));
   (* Wrap the token list in parens to make it a progn *)
   let wrapped = (TOpenBrace, (0, 0))::ts@[(TCloseBrace, (0, 0))] in
   let (v, _) = parse_progn wrapped in
