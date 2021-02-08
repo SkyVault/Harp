@@ -44,6 +44,9 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     if not (var_defined state.env atom)
     then failwith (Printf.sprintf "Error:: function '%s' is undefined" atom)
     else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
+  | Each (AtomValue name, range, Progn ns) ->
+    let new_state = { env = { ident = name }::state.env } in
+    (Each (AtomValue name, analyze_equality state range, Progn (analyze_node_list new_state ns)), state)
   | eq -> (analyze_equality state eq, state)
 
 and analyze_equality state eq =
@@ -99,5 +102,6 @@ and analyze_node_list (state : state) (ns : node list) : node list =
 let analyze_ast = function
   | Progn ns -> Progn (analyze_node_list { env = [
       { ident = "print" };
+      { ident = "range" };
     ] } ns)
   | _ -> failwith "analyze ast expects a progn"
