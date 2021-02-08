@@ -45,6 +45,18 @@ and parse_if_expr (ts: token list): Ast.node * token list =
       end
      | _ -> failwith "if expected a progn after the expression"
 
+and parse_each_expr (ts: token list): Ast.node * token list =
+  match ts with
+  | (TAtom ident,_)::(TAtom "in",_)::rest -> begin
+    let (range, rest') = parse_expr rest in
+    match rest' with
+    | (TOpenBrace, i)::rest' ->
+      let (progn, rest') = (parse_progn ((TOpenBrace, i)::rest')) in
+      (Each (AtomValue ident, range, progn), rest')
+    | _ -> failwith "Each is missing body"
+  end
+  | _ -> failwith "Each requires an ident and the in keyword"
+
 and parse_fun_def (ts: token list): Ast.node * token list =
   match ts with
   | [] -> failwith "Empty function definition"
@@ -88,16 +100,17 @@ and parse_progn (ts: token list): Ast.node * token list =
        let new_list = n::ns in
        (collect rest new_list)
   in
-  match ts with
-  | (TOpenBrace, _)::rest ->
-     let (ns, rest') = collect rest [] in
-     (Progn ns, rest')
-  | _ -> parse_expr ts
+    match ts with
+    | (TOpenBrace, _)::rest ->
+      let (ns, rest') = collect rest [] in
+      (Progn ns, rest')
+    | _ -> parse_expr ts
 
 and parse_expr (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
+  | (TAtom "each", _)::rest -> parse_each_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
   | (TAtom n,_)::(TOpenParen,i)::rest ->
     parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)

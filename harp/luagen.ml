@@ -62,6 +62,12 @@ and if_to_lua it expr progn else' =
   end
   | _ -> failwith "if_to_lua expects a progn"
 
+and each_to_lua it ident range progn =
+  match (ident, progn) with
+  | (AtomValue i, Progn ns) ->
+    sprintf "(function()\nfor %s in %s do\n%s\nend\nend)()" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false)
+  | _ -> failwith "Each expected an identifier"
+
 and list_to_lua it (es : node list) : string =
   let inn = es |> List.map (fun e -> (expr_to_lua it e) ^ ",") |> cat_strings in
   sprintf "{%s}" inn
@@ -84,10 +90,12 @@ and expr_to_lua it (expr : node) : string =
   | Term (t, a, b) -> expr_ab a (term_to_str t) b
   | Factor (t, a, b) -> expr_ab a (factor_to_str t) b
   | Unary (u, a) -> sprintf "(%s%s)" (unary_to_str u) (expr_to_lua it a)
+  | Range (min, max) -> sprintf "range(%s, %s)" (expr_to_lua it min) (expr_to_lua it max)
   | AtomValue a -> a
   | LetExpr (ident, expr') ->
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua it expr')
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else'
+  | Each (ident', range', progn') -> each_to_lua it ident' range' progn'
   | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn'
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
@@ -106,6 +114,8 @@ and progn_to_lua it (ns : node list) ~ret : string =
 
 let ast_to_lua (ast : Ast.node) : string =
   let it = { indent = 0; scope_top = []; is_expr = false } in
+
+  let pre = "require \"../luastd/range\"" in
   match ast with
-  | Progn ns -> progn_to_lua it ns ~ret:true
+  | Progn ns -> sprintf "%s\n%s\n" pre (progn_to_lua it ns ~ret:true)
   | _ -> failwith "Ast to lua expects a progn at the top"

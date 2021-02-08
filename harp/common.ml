@@ -3,6 +3,8 @@ let (>>) f g x = g(f(x))
 let (>>|) r f = Result.map f r
 let (>>=) r f = Result.bind r f
 
+let get_rnd_name_posfix = Random.int 1000
+
 let cat_strings = List.fold_left (fun a b -> a ^ " " ^ b) ""
 
 let rec zip paired_lists =

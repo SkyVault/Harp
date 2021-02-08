@@ -1,16 +1,5 @@
-let z := 32
-let x := 100
-let y := z
+let v := 0..10
 
-let myVal := if x > y {
-  let w := 1.3
-  x + w
-} else {
-  let w := "Error"
-  w
+each i in v {
+     print ("I: " i)
 }
-
-fun myFun (w) {
-    print("W: " w "MYVAL: " myVal)
-}
-myFun(100)

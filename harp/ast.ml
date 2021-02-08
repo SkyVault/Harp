@@ -21,6 +21,7 @@ type node =
   | Equality of equality * node * node
   | LetExpr of node * node (* Name -> Value *)
   | IfExpr of node * node * node option (* Expr -> Progn *)
+  | Each of node * node * node (* Atom, Range, Progn *)
   | List of node list
   | Fun of node * node * node (* Atom Args Progn *)
   | FunCall of node * node (* Atom Params *)
@@ -58,6 +59,7 @@ and to_str (ast : node) : string =
       sprintf "(if %s %s %s)" (to_str expr) (to_str progn) (to_str elseProgn)
     | _ -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
   end
+  | Each (name, range, progn) -> sprintf "(each %s in %s %s)" (to_str name) (to_str range) (to_str progn)
   | Fun (atom, args, progn) -> sprintf "<fun %s %s %s>" (to_str atom) (to_str args) (to_str progn)
   | FunCall (atom, params) -> sprintf "<%s>(%s)" (to_str atom) (to_str params)
   | Progn ns -> sprintf "{%s }" (list_to_str ns)
