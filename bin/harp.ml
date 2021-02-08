@@ -9,6 +9,7 @@ let () =
       Common.read_whole_file script
       |> tokenize
       |> Parser.parse
+      |> Analyzer.analyze_ast
     in
       ast |> Ast.to_str |> Printf.printf "\n-=<{ AST OUT }>=-\n%s\n";
 

@@ -57,7 +57,7 @@ and if_to_lua it expr progn else' =
       let inner = sprintf "if %s then\nreturn %s\nelse\nreturn %s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) (progn_to_lua it es ~ret:false) in
       sprintf "(function()\n%s\nend)()" inner
     | _ ->
-      let inner = sprintf "if %s then\nreturn%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) in
+      let inner = sprintf "if %s then\nreturn %s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) in
       sprintf "(function()\n%s\nend)()" inner
   end
   | _ -> failwith "if_to_lua expects a progn"
