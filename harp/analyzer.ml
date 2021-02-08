@@ -1,14 +1,22 @@
 open Ast
 open Printf
 
+type types =
+  | Any
+  | List
+
 type vardef =
-  { ident: string; }
+  { ident: string;
+    t : types }
 
 type state =
   { env : vardef list }
 
+let mk_vardef n = { ident = n; t = Any }
+let mk_vardef_t n t' = { ident = n; t = t' }
+
 let atom_to_vardef = function
-  | AtomValue v -> { ident = v }
+  | AtomValue v -> mk_vardef v
   | _ -> failwith "Not an atom"
 
 let dump_env st =
@@ -17,7 +25,7 @@ let dump_env st =
 
 let rec var_defined env name =
   match env with
-  | { ident }::rest ->
+  | { ident; _ }::rest ->
     if ident = name
     then true
     else var_defined rest name
@@ -27,7 +35,7 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
   match expr with
   | LetExpr (AtomValue name, value) ->
     (LetExpr (AtomValue name, analyze_equality state value),
-      { env = {ident = name}::state.env })
+      { env = (mk_vardef name)::state.env })
   | IfExpr (expr, Progn ifTrue, Some (Progn ifFalse)) ->
     let a = analyze_node_list state ifTrue in
     let b = analyze_node_list state ifFalse in
@@ -45,7 +53,7 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     then failwith (Printf.sprintf "Error:: function '%s' is undefined" atom)
     else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
   | Each (AtomValue name, range, Progn ns) ->
-    let new_state = { env = { ident = name }::state.env } in
+    let new_state = { env = (mk_vardef name)::state.env } in
     (Each (AtomValue name, analyze_equality state range, Progn (analyze_node_list new_state ns)), state)
   | eq -> (analyze_equality state eq, state)
 
@@ -101,7 +109,9 @@ and analyze_node_list (state : state) (ns : node list) : node list =
 
 let analyze_ast = function
   | Progn ns -> Progn (analyze_node_list { env = [
-      { ident = "print" };
-      { ident = "range" };
+      (mk_vardef "print");
+      (mk_vardef "range");
+      (mk_vardef "push");
+      (mk_vardef "nth");
     ] } ns)
   | _ -> failwith "analyze ast expects a progn"

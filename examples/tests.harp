@@ -1,7 +1,18 @@
 let v := 0..10
 
-let myList := (1 2 3 4)
+let myList := ("A" "B" "C" "D")
+let test := "hello"
 
-each item in 0..1 {
-  print ("I: " item)
+push(myList 100)
+
+each v in myList {
+  print ("item: " v)
 }
+
+let test := if 10 > 1 {
+  "hello"
+} else {
+  "world"
+}
+
+print (test)
