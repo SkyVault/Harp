@@ -54,10 +54,10 @@ and if_to_lua it expr progn else' =
   | Progn ns -> begin
     match else' with
     | Some (Progn es) ->
-      let inner = sprintf "if %s then\nreturn %s\nelse\nreturn %s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) (progn_to_lua it es ~ret:false) in
+      let inner = sprintf "if %s then\n%s\nelse\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) (progn_to_lua it es ~ret:true) in
       sprintf "(function()\n%s\nend)()" inner
     | _ ->
-      let inner = sprintf "if %s then\nreturn %s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) in
+      let inner = sprintf "if %s then\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) in
       sprintf "(function()\n%s\nend)()" inner
   end
   | _ -> failwith "if_to_lua expects a progn"
@@ -86,9 +86,9 @@ and expr_to_lua it (expr : node) : string =
   | Unary (u, a) -> sprintf "(%s%s)" (unary_to_str u) (expr_to_lua it a)
   | AtomValue a -> a
   | LetExpr (ident, expr') ->
-    sprintf "local %s = %s" (expr_to_lua it ident) (expr_to_lua it expr')
+    sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua it expr')
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else'
-  | Fun (atom', args', progn') ->  fun_to_lua it atom' args' progn'
+  | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn'
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
   | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap

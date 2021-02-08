@@ -7,6 +7,10 @@ type vardef =
 type state =
   { env : vardef list }
 
+let atom_to_vardef = function
+  | AtomValue v -> { ident = v }
+  | _ -> failwith "Not an atom"
+
 let dump_env st =
   printf "ENV: \n";
   st.env |> List.iter (fun v -> printf "%s\n" v.ident)
@@ -32,15 +36,14 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     let a = analyze_node_list state ifTrue in
     (IfExpr (analyze_equality state expr, Progn a, None), state)
   | Fun (atom, List args, Progn ns) ->
-    let vals = args |> List.map (fun a ->
-      match a with
-      |AtomValue name -> { ident = name }
-      | _ -> failwith "Args failure")
-    in
-      let new_state = { env = (List.append state.env vals) } in
-      (Fun (atom, List args, Progn (analyze_node_list new_state ns)), state)
+    let vals = args |> List.map atom_to_vardef in
+    let func_state = { env = (List.append state.env vals) } in
+    let new_state = { env = (atom_to_vardef atom)::state.env } in
+    (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
   | FunCall (AtomValue atom, List ps) ->
-    (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
+    if not (var_defined state.env atom)
+    then failwith (Printf.sprintf "Error:: function '%s' is undefined" atom)
+    else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
   | eq -> (analyze_equality state eq, state)
 
 and analyze_equality state eq =
@@ -94,5 +97,7 @@ and analyze_node_list (state : state) (ns : node list) : node list =
   | _ -> ns
 
 let analyze_ast = function
-  | Progn ns -> Progn (analyze_node_list { env = [] } ns)
+  | Progn ns -> Progn (analyze_node_list { env = [
+      { ident = "print" };
+    ] } ns)
   | _ -> failwith "analyze ast expects a progn"
