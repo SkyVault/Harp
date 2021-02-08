@@ -64,8 +64,14 @@ and if_to_lua it expr progn else' =
 
 and each_to_lua it ident range progn =
   match (ident, progn) with
-  | (AtomValue i, Progn ns) ->
-    sprintf "(function()\nfor %s in %s do\n%s\nend\nend)()" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false)
+  | (AtomValue i, Progn ns) -> begin
+    match range with
+    | AtomValue _ | Range _ ->
+      sprintf "(function()\nfor %s in %s do\n%s\nend\nend)()" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false)
+    | List _ ->
+      sprintf "(function()\nfor _,%s in ipairs(%s) do\n%s\nend\nend)()" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false)
+    | _ -> failwith "Can't iterate the value in each"
+  end
   | _ -> failwith "Each expected an identifier"
 
 and list_to_lua it (es : node list) : string =

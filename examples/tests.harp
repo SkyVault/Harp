@@ -1,5 +1,7 @@
 let v := 0..10
 
-each i in v {
-     print ("I: " i)
+let myList := (1 2 3 4)
+
+each item in 0..1 {
+  print ("I: " item)
 }
