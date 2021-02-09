@@ -1,1 +1,5 @@
-declare math.pi ()
+let myVar := 100
+
+myVar <- myVar + 32
+
+print (myVar)

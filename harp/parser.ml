@@ -136,7 +136,15 @@ and parse_expr (ts: token list): Ast.node * token list =
     parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
   | (TOpenParen, _)::_ -> parse_list ts
   (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
-  | _ -> parse_equality ts
+  | _ -> parse_assignment ts
+
+and parse_assignment (ts: token list): Ast.node * token list =
+  let (a, ts') = parse_equality ts in
+  match ts' with
+  | (TAtom "<-", _)::ts' ->
+    let (b, ts') = parse_equality ts' in
+    (Assignment (a, b), ts')
+  | _ -> (a, ts')
 
 and parse_equality (ts: token list): Ast.node * token list =
   let rec loop (ts : token list) : Ast.node * token list =

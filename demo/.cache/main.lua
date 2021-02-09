@@ -3,13 +3,39 @@ require "../luastd/std"
 
 require( "prelude")
  local x = 32.0;
+ local y = 32.0;
  on_update( function( dt)
-return (function()
+local ax = (function()
 if love.keyboard.isDown( "d") then
-return print( "We can't mutate variables :p")
+return 1.0
+else
+return (function()
+if love.keyboard.isDown( "a") then
+return (-1.0)
+else
+return 0.0
 end
+end)()
+end
+end)();
+ local ay = (function()
+if love.keyboard.isDown( "s") then
+return 1.0
+else
+return (function()
+if love.keyboard.isDown( "w") then
+return (-1.0)
+else
+return 0.0
+end
+end)()
+end
+end)();
+ x = (x + (ax * (200.0 * dt)));
+return (function()
+y = (y + (ay * (200.0 * dt)));
 end)()
 end)
 return on_draw( function()
-return love.graphics.rectangle( "fill", x, 10.0, 100.0, 100.0)
+return love.graphics.rectangle( "fill", x, y, 100.0, 100.0)
 end)

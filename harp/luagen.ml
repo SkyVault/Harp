@@ -119,6 +119,11 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | AtomValue a -> a
   | LetExpr (ident, expr') ->
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr')
+  | Assignment (ident, expr') ->
+    let inner = sprintf "%s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr') in
+    if is_value
+    then fn_wrap inner
+    else inner
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else' ~value:is_value
   | While (expr', progn') -> while_to_lua it expr' progn' ~value:is_value
   | Each (ident', range', progn') -> each_to_lua it ident' range' progn' ~value:is_value

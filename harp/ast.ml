@@ -19,6 +19,7 @@ type node =
   | Range of node * node
   | Comparison of comparison * node * node
   | Equality of equality * node * node
+  | Assignment of node * node (* name, value *)
   | LetExpr of node * node (* Name -> Value *)
   | IfExpr of node * node * node option (* Expr, Progn, Option Progn *)
   | Each of node * node * node (* Atom, Range, Progn *)
@@ -54,6 +55,7 @@ and to_str (ast : node) : string =
   | Range (min, max) -> sprintf "(%s..%s)" (to_str min) (to_str max)
   | Comparison (t, a, b) -> sprintf "(%s %s %s)" (comp_to_str t) (to_str a) (to_str b)
   | Equality (t, a, b) -> sprintf "(%s %s %s)" (eq_to_str t) (to_str a) (to_str b)
+  | Assignment (a, value) -> sprintf "(%s <- %s)" (to_str a) (to_str value)
   | LetExpr (name, value) -> sprintf "(let %s %s)" (to_str name) (to_str value)
   | IfExpr (expr, progn, el) -> begin
     match el with
