@@ -52,9 +52,12 @@ let rec var_defined env name =
 
 let rec analyze_expr (state : state) (expr : node) : (node * state) =
   match expr with
+  | Declaration (name, arity) ->
+    (Declaration (name, arity), { env = (mk_fundef name arity)::state.env })
   | LetExpr (AtomValue name, value) ->
-    (LetExpr (AtomValue name, analyze_equality state value),
-      { env = (mk_vardef name)::state.env })
+    let (node, state') = analyze_expr state value in
+    (LetExpr (AtomValue name, node),
+      { env = (mk_vardef name)::state'.env })
   | IfExpr (expr, Progn ifTrue, Some (Progn ifFalse)) ->
     let a = analyze_node_list state ifTrue in
     let b = analyze_node_list state ifFalse in
@@ -78,7 +81,10 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
         if a.arity <> (List.length ps)
         then failwith (sprintf "Wrong number of arguments for function '%s'" atom)
         else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
-      | _ -> failwith (sprintf "Failed to get function '%s' from env" atom)
+      | Some {ident = _; t = _; v = VarAny } ->
+        (* TODO(Dustin): Arity check on passed functions *)
+        (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
+      | None | _ -> failwith (sprintf "Failed to get function '%s' from env" atom)
     end
   | Each (AtomValue name, range, Progn ns) ->
     let new_state = { env = (mk_vardef name)::state.env } in
@@ -141,6 +147,6 @@ let analyze_ast = function
       (mk_fundef "range" 2);
       (mk_fundef "push" 2);
       (mk_fundef "nth" 2);
-      (mk_fundef "read" 1);
+      (mk_fundef "read" 0);
     ] } ns)
   | _ -> failwith "analyze ast expects a progn"

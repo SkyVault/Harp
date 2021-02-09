@@ -1,18 +1,1 @@
-let v := 0..10
-
-let myList := ("A" "B" "C" "D")
-let test := "hello"
-
-push(myList 100)
-
-each v in myList {
-  print ("item: " v)
-}
-
-let test := if 10 > 1 {
-  "hello"
-} else {
-  "world"
-}
-
-print (test)
+declare math.pi ()

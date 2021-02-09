@@ -45,6 +45,14 @@ and parse_if_expr (ts: token list): Ast.node * token list =
       end
      | _ -> failwith "if expected a progn after the expression"
 
+and parse_while_expr (ts: token list): Ast.node * token list =
+  match ts with
+  | [] -> failwith "Empty while expression"
+  | _ ->
+    let (expr, rest') = parse_expr ts in
+    let (progn, rest') = parse_progn rest' in
+    (While (expr, progn), rest')
+
 and parse_each_expr (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom ident,_)::(TAtom "in",_)::rest -> begin
@@ -73,6 +81,16 @@ and parse_fun_def (ts: token list): Ast.node * token list =
 and parse_fun_call (name : Ast.node) (ts : token list) =
   let (params, rest) = parse_list ts in
   (FunCall (name, params), rest)
+
+and parse_declaration (ts : token list): Ast.node * token list =
+  match ts with
+  | (TAtom name,_)::(TOpenParen,i)::rest -> begin
+    let (args, rest') = parse_list ((TOpenParen, i)::rest) in
+    match args with
+    | List as' -> (Declaration (name, (List.length as')), rest')
+    | _ -> failwith "declaration expected args"
+  end
+  | _ -> failwith "Malformed declaration"
 
 and parse_list (ts: token list): Ast.node * token list =
   let rec collect ts ns =
@@ -110,8 +128,10 @@ and parse_expr (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
+  | (TAtom "while", _)::rest -> parse_while_expr rest
   | (TAtom "each", _)::rest -> parse_each_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
+  | (TAtom "declare", _)::rest -> parse_declaration rest
   | (TAtom n,_)::(TOpenParen,i)::rest ->
     parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
   | (TOpenParen, _)::_ -> parse_list ts

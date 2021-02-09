@@ -20,9 +20,11 @@ type node =
   | Comparison of comparison * node * node
   | Equality of equality * node * node
   | LetExpr of node * node (* Name -> Value *)
-  | IfExpr of node * node * node option (* Expr -> Progn *)
+  | IfExpr of node * node * node option (* Expr, Progn, Option Progn *)
   | Each of node * node * node (* Atom, Range, Progn *)
+  | While of node * node (* Expr progn *)
   | List of node list
+  | Declaration of string * int (* name, arity *)
   | Fun of node * node * node (* Atom Args Progn *)
   | FunCall of node * node (* Atom Params *)
   | Progn of node list
@@ -59,9 +61,11 @@ and to_str (ast : node) : string =
       sprintf "(if %s %s %s)" (to_str expr) (to_str progn) (to_str elseProgn)
     | _ -> sprintf "(if %s %s)" (to_str expr) (to_str progn)
   end
+  | While (expr, progn) -> sprintf "(while %s %s)" (to_str expr) (to_str progn)
   | Each (name, range, progn) -> sprintf "(each %s in %s %s)" (to_str name) (to_str range) (to_str progn)
   | Fun (atom, args, progn) -> sprintf "<fun %s %s %s>" (to_str atom) (to_str args) (to_str progn)
   | FunCall (atom, params) -> sprintf "<%s>(%s)" (to_str atom) (to_str params)
+  | Declaration (name, arity) -> sprintf "<native:%s>(%d)" name arity
   | Progn ns -> sprintf "{%s }" (list_to_str ns)
   | List ns -> sprintf "[%s]" (list_to_str ns)
   | Terminal -> "EOF"

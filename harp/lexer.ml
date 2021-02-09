@@ -114,4 +114,4 @@ let tokenize (s: string): token list =
        printf "Unhandled token '%c'\n" c;
        loop rest res info
   in
-    loop (explode s) [] (0, 0) |> reverse |> List.map (fun (t,i) -> printf ": %s\n" (tok_to_str t); (t, i))
+    loop (explode s) [] (0, 0) |> reverse

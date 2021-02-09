@@ -14,7 +14,7 @@ let rec handle_last_val_in_progn it last =
   | LetExpr (AtomValue name,_) ->
     sprintf "%s\nreturn %s" (expr_to_lua it last ~value: true) name
   | Fun (AtomValue name,_,_) ->
-    sprintf "%s\nreturn %s" (expr_to_lua it last ~value: true) name
+    sprintf "%s\nreturn %s" (expr_to_lua it last ~value: false) name
   | _ -> sprintf "return %s" (expr_to_lua it last ~value: true)
 
 and fun_to_lua ?value:(is_value=false) it atom args progn =
@@ -67,6 +67,15 @@ and if_to_lua it expr progn else' ~value =
   end
   | _ -> failwith "if_to_lua expects a progn"
 
+and while_to_lua it expr progn ~value =
+  match progn with
+  | Progn ns -> begin
+    let inner = sprintf "while %s do\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) in
+    if value then fn_wrap inner
+    else inner
+  end
+  | _ -> failwith "if_to_lua expects a progn"
+
 and each_to_lua it ident range progn ~value =
   match (ident, progn) with
   | (AtomValue i, Progn ns) -> begin
@@ -111,10 +120,12 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | LetExpr (ident, expr') ->
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr')
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else' ~value:is_value
+  | While (expr', progn') -> while_to_lua it expr' progn' ~value:is_value
   | Each (ident', range', progn') -> each_to_lua it ident' range' progn' ~value:is_value
   | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn' ~value:is_value
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
+  | Declaration _ -> ""
   | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
 

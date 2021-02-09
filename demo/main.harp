@@ -1,0 +1,19 @@
+declare require (i)
+declare on_update (fn)
+declare on_draw (fn)
+declare love.keyboard.isDown (k)
+declare love.graphics.rectangle (t x y w h)
+
+require ("prelude")
+
+let x := 32
+
+on_update(fun _ (dt) {
+  if love.keyboard.isDown ("d") {
+    print ("We can't mutate variables :p")
+  }
+})
+
+on_draw(fun _ () {
+    love.graphics.rectangle ("fill" x 10 100 100)
+})

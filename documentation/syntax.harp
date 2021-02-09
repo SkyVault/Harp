@@ -1,26 +1,53 @@
-
+;; Sum types
 type Player { x, y }
 
-let dict := { "test": 100, "dict": 20 }
-let list := [1 2 3]
+;; Or types
+type Animals =
+     | Dog of { bark }
+     | Duck of { quack }
+     | Human of { hasFeels, hunger }
 
-fun add [a b] (a + b)
+;; Pattern matching
+case animal of
+| Dog d {  }
+| Duck q {
+  if q.quack { print ("Quack") }
+}
+| _ { fail () }
+
+;; Comment
+
+let dict := #("test": 100 "dict": 20)
+let list := (1 2 3)
+
+print (list.(1))        ; prints 2
+print (dict.("test"))   ; prints 100
+
+fun add (a b) { a + b }
 
 let a := 32
 let test := (a + 1)
 
-if a == b (
-   b + 2
-)
+let it := if a == b {
+  b + 2
+} else {
+  -32
+}
 
-each i in 0..100 (
-    print(i + 100)
-)
+each i in 0..100 {
+  print (i + 100)
+}
 
-fun update_player [player] (
-    let dt := get_frame_time(),
-    let x := player.x + 100 * dt,
-    { player | x = x } # Functional update
-)
+while isTrue {
+  ; do a thing
+}
 
-print["Hello World"]
+a |> add2 |> double |> print
+
+fun update_player (player) {
+  let dt := get_frame_time ()
+  let x := player.x + 100 * dt
+  { player | x = x } ; Functional update
+}
+
+print ("Hello World")
