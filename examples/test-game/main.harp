@@ -1,3 +1,17 @@
+let todos := ()
+
+fun show_todos () {
+  each t in todos {
+    print (t)
+  }
+}
+
+fun add_todo () {
+  print ("TODO: ")
+  let todo_text := read ()
+  push (todos todo_text)
+}
+
 fun forever (fn) {
     let cont := fn()
     if cont {
@@ -7,11 +21,22 @@ fun forever (fn) {
 
 forever(fun _ () {
   let inp := read ()
+  if inp ~= "quit" {
 
-  if inp = "quit" {
-    #f
-  } else {
-    print("Very good! " inp)
+    if inp = "add" {
+      add_todo ()
+    }
+
+    if inp = "show" {
+      show_todos ()
+    }
+
     #t
-  }
+  } else {#f}
 })
+
+fun arityTest (a b c) {
+    a + b * c
+}
+
+print(arityTest (1 2 4))

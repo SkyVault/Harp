@@ -5,23 +5,42 @@ type types =
   | Any
   | List
 
+type func =
+  { arity : int }
+
+type vartype =
+  | VarAny
+  | VarFun of func
+  | VarVar
+
 type vardef =
   { ident: string;
-    t : types }
+    t : types;
+    v : vartype; }
 
 type state =
   { env : vardef list }
 
-let mk_vardef n = { ident = n; t = Any }
-let mk_vardef_t n t' = { ident = n; t = t' }
+let mk_vardef n = { ident = n; t = Any; v = VarAny }
+let mk_vardef_t n t' = { ident = n; t = t'; v = VarAny }
+let mk_fundef n a = { ident = n; t = Any; v = VarFun { arity = a } }
 
 let atom_to_vardef = function
   | AtomValue v -> mk_vardef v
   | _ -> failwith "Not an atom"
 
+let atom_to_str = function | AtomValue v -> v | _ -> failwith "Not an atom"
+
 let dump_env st =
   printf "ENV: \n";
   st.env |> List.iter (fun v -> printf "%s\n" v.ident)
+
+let rec var_find env name =
+  match env with
+  | v::rest ->
+    if v.ident = name then Some v
+    else var_find rest name
+  | _ -> None
 
 let rec var_defined env name =
   match env with
@@ -45,13 +64,22 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     (IfExpr (analyze_equality state expr, Progn a, None), state)
   | Fun (atom, List args, Progn ns) ->
     let vals = args |> List.map atom_to_vardef in
-    let func_state = { env = (List.append state.env ((atom_to_vardef atom)::vals)) } in
-    let new_state = { env = (atom_to_vardef atom)::state.env } in
+    let vardef = mk_fundef (atom_to_str atom) (List.length args) in
+    let func_state = { env = (List.append state.env (vardef::vals)) } in
+    let new_state = { env = vardef::state.env } in
     (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
   | FunCall (AtomValue atom, List ps) ->
     if not (var_defined state.env atom)
-    then failwith (Printf.sprintf "Error:: function '%s' is undefined" atom)
-    else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
+    then failwith (sprintf "Error:: function '%s' is undefined" atom)
+    else begin
+      let fn = var_find state.env atom in
+      match fn with
+      | Some { ident = _; t = _;  v = VarFun a } ->
+        if a.arity <> (List.length ps)
+        then failwith (sprintf "Wrong number of arguments for function '%s'" atom)
+        else (FunCall (AtomValue atom, List (analyze_node_list state ps)), state)
+      | _ -> failwith (sprintf "Failed to get function '%s' from env" atom)
+    end
   | Each (AtomValue name, range, Progn ns) ->
     let new_state = { env = (mk_vardef name)::state.env } in
     (Each (AtomValue name, analyze_equality state range, Progn (analyze_node_list new_state ns)), state)
@@ -109,10 +137,10 @@ and analyze_node_list (state : state) (ns : node list) : node list =
 
 let analyze_ast = function
   | Progn ns -> Progn (analyze_node_list { env = [
-      (mk_vardef "print");
-      (mk_vardef "range");
-      (mk_vardef "push");
-      (mk_vardef "nth");
-      (mk_vardef "read");
+      (mk_fundef "print" 1);
+      (mk_fundef "range" 2);
+      (mk_fundef "push" 2);
+      (mk_fundef "nth" 2);
+      (mk_fundef "read" 1);
     ] } ns)
   | _ -> failwith "analyze ast expects a progn"

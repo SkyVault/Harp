@@ -57,11 +57,11 @@ and if_to_lua it expr progn else' ~value =
   | Progn ns -> begin
     match else' with
     | Some (Progn es) ->
-      let inner = sprintf "if %s then\n%s\nelse\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) (progn_to_lua it es ~ret:true) in
+      let inner = sprintf "if %s then\n%s\nelse\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) (progn_to_lua it es ~ret:value) in
       if value then fn_wrap inner
       else inner
     | _ ->
-      let inner = sprintf "if %s then\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) in
+      let inner = sprintf "if %s then\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:value) in
       if value then fn_wrap inner
       else inner
   end
