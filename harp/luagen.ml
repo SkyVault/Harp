@@ -12,12 +12,12 @@ let fn_wrap = sprintf "(function()\n%s\nend)()"
 let rec handle_last_val_in_progn it last =
   match last with
   | LetExpr (AtomValue name,_) ->
-    sprintf "%s\nreturn %s" (expr_to_lua it last) name
+    sprintf "%s\nreturn %s" (expr_to_lua it last ~value: true) name
   | Fun (AtomValue name,_,_) ->
-    sprintf "%s\nreturn %s" (expr_to_lua it last) name
-  | _ -> sprintf "return %s" (expr_to_lua it last)
+    sprintf "%s\nreturn %s" (expr_to_lua it last ~value: true) name
+  | _ -> sprintf "return %s" (expr_to_lua it last ~value: true)
 
-and fun_to_lua it atom args progn =
+and fun_to_lua ?value:(is_value=false) it atom args progn =
   let rec args_loop args build =
     match args with
     | (AtomValue a)::[] -> a::build
@@ -30,15 +30,18 @@ and fun_to_lua it atom args progn =
     | (AtomValue a, List ns, Progn ps) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
-      sprintf "local %s = function(%s)\nreturn %s\nend" (a) args_str (progn_to_lua it ps ~ret:false)
+      let fn_part = sprintf "function(%s)\n%s\nend" args_str (progn_to_lua it ps ~ret:true) in
+      let inner = sprintf "local %s = nil\n%s = %s" (a) (a) fn_part in
+      if is_value then fn_part
+      else inner
     | _ -> failwith "fun_to_lua malformed function"
 
 and fun_call_to_lua it atom args =
   let rec args_loop args build =
     match args with
-    | expr::[] -> (expr_to_lua it expr)::build
+    | expr::[] -> (expr_to_lua it expr ~value:true)::build
     | expr::rest ->
-      args_loop rest (List.append [(sprintf "%s," (expr_to_lua it expr))] build)
+      args_loop rest (List.append [(sprintf "%s," (expr_to_lua it expr ~value:true))] build)
     | [] -> build
   in
     match (atom, args) with
@@ -97,6 +100,7 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
       s
   | StrValue s ->
     "\"" ^ s ^ "\""
+  | BolValue b -> if b then "true" else "false"
   | Equality (eq, a, b) -> expr_ab a (eq_to_str eq) b
   | Comparison (cmp, a, b) -> expr_ab a (comp_to_str cmp) b
   | Term (t, a, b) -> expr_ab a (term_to_str t) b
@@ -108,21 +112,23 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr')
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else' ~value:is_value
   | Each (ident', range', progn') -> each_to_lua it ident' range' progn' ~value:is_value
-  | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn'
+  | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn' ~value:is_value
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
   | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
 
 and progn_to_lua it (ns : node list) ~ret : string =
-  let (nss, last) = pop_last ns in
-  let ss = nss |> List.map (fun e -> (expr_to_lua it e) ^ "\n") in
-  sprintf
-    "%s\n%s"
-    (ss |> cat_strings |> String.trim)
-    (if ret then
-       (handle_last_val_in_progn it last)
-     else (expr_to_lua it last)) |> String.trim
+  if (List.length ns) = 0 then ""
+  else
+    let (nss, last) = pop_last ns in
+    let ss = nss |> List.map (fun e -> (expr_to_lua it e) ^ "\n") in
+    sprintf
+      "%s\n%s"
+      (ss |> cat_strings |> String.trim)
+      (if ret then
+        (handle_last_val_in_progn it last)
+      else (expr_to_lua it last)) |> String.trim
 
 let ast_to_lua (ast : Ast.node) : string =
   let it = { indent = 0; scope_top = []; is_expr = false } in

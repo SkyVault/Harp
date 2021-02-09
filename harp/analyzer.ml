@@ -45,7 +45,7 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     (IfExpr (analyze_equality state expr, Progn a, None), state)
   | Fun (atom, List args, Progn ns) ->
     let vals = args |> List.map atom_to_vardef in
-    let func_state = { env = (List.append state.env vals) } in
+    let func_state = { env = (List.append state.env ((atom_to_vardef atom)::vals)) } in
     let new_state = { env = (atom_to_vardef atom)::state.env } in
     (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
   | FunCall (AtomValue atom, List ps) ->
@@ -113,5 +113,6 @@ let analyze_ast = function
       (mk_vardef "range");
       (mk_vardef "push");
       (mk_vardef "nth");
+      (mk_vardef "read");
     ] } ns)
   | _ -> failwith "analyze ast expects a progn"

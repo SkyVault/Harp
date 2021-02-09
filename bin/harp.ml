@@ -9,11 +9,10 @@ let () =
       Common.read_whole_file script
       |> tokenize
       |> Parser.parse
-      |> Analyzer.analyze_ast
     in
       ast |> Ast.to_str |> Printf.printf "\n-=<{ AST OUT }>=-\n%s\n";
 
-      let lua = ast |> Luagen.ast_to_lua in
+      let lua = ast |> Analyzer.analyze_ast |> Luagen.ast_to_lua in
       Printf.printf "\n-=<{ LUA OUT }>=-\n%s\n\n" lua;
-      Common.write_string_to_file "out.lua" lua
+      Common.write_string_to_file "main.lua" lua
   | _ -> ()

@@ -1,0 +1,17 @@
+fun forever (fn) {
+    let cont := fn()
+    if cont {
+      forever(fn)
+    }
+}
+
+forever(fun _ () {
+  let inp := read ()
+
+  if inp = "quit" {
+    #f
+  } else {
+    print("Very good! " inp)
+    #t
+  }
+})

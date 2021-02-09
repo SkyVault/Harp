@@ -5,3 +5,5 @@ end
 function nth(xs, i)
   return xs[i]
 end
+
+read = io.read
