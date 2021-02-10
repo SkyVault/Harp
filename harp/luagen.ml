@@ -22,16 +22,17 @@ and fun_to_lua ?value:(is_value=false) it atom args progn =
     match args with
     | (AtomValue a)::[] -> a::build
     | (AtomValue a)::rest ->
-      args_loop rest (List.append [(sprintf "%s," a)] build)
+      args_loop rest (List.append [(sprintf "%s," (ident_to_lua a))] build)
     | [] -> build
     | _ -> build
   in
     match (atom, args, progn) with
     | (AtomValue a, List ns, Progn ps) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
+      let name = ident_to_lua a in
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
       let fn_part = sprintf "function(%s)\n%s\nend" args_str (progn_to_lua it ps ~ret:true) in
-      let inner = sprintf "local %s = nil\n%s = %s" (a) (a) fn_part in
+      let inner = sprintf "local %s = nil\n%s = %s" (name) (name) fn_part in
       if is_value then fn_part
       else inner
     | _ -> failwith "fun_to_lua malformed function"
@@ -48,7 +49,7 @@ and fun_call_to_lua it atom args =
     | (AtomValue a, List ns) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
-      sprintf "%s(%s)" a args_str
+      sprintf "%s(%s)" (ident_to_lua a) args_str
     | _ -> failwith "fun_to_lua malformed function"
 
 
@@ -58,12 +59,10 @@ and if_to_lua it expr progn else' ~value =
     match else' with
     | Some (Progn es) ->
       let inner = sprintf "if %s then\n%s\nelse\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) (progn_to_lua it es ~ret:value) in
-      if value then fn_wrap inner
-      else inner
+      if value then fn_wrap inner else inner
     | _ ->
       let inner = sprintf "if %s then\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:value) in
-      if value then fn_wrap inner
-      else inner
+      if value then fn_wrap inner else inner
   end
   | _ -> failwith "if_to_lua expects a progn"
 
@@ -71,8 +70,7 @@ and while_to_lua it expr progn ~value =
   match progn with
   | Progn ns -> begin
     let inner = sprintf "while %s do\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:false) in
-    if value then fn_wrap inner
-    else inner
+    if value then fn_wrap inner else inner
   end
   | _ -> failwith "if_to_lua expects a progn"
 
@@ -82,12 +80,10 @@ and each_to_lua it ident range progn ~value =
     match range with
     | AtomValue _ | Range _ ->
       let inner = sprintf "for %s in iter(%s) do\n%s\nend" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false) in
-      if value then fn_wrap inner
-      else inner
+      if value then fn_wrap inner else inner
     | List _ ->
       let inner = sprintf "for _,%s in ipairs(%s) do\n%s\nend" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false) in
-      if value then fn_wrap inner
-      else inner
+      if value then fn_wrap inner else inner
     | _ -> failwith "Can't iterate the value in each"
   end
   | _ -> failwith "Each expected an identifier"
@@ -116,14 +112,12 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | Factor (t, a, b) -> expr_ab a (factor_to_str t) b
   | Unary (u, a) -> sprintf "(%s%s)" (unary_to_str u) (expr_to_lua it a)
   | Range (min, max) -> sprintf "range(%s, %s)" (expr_to_lua it min) (expr_to_lua it max)
-  | AtomValue a -> a
+  | AtomValue a -> ident_to_lua a
   | LetExpr (ident, expr') ->
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr')
   | Assignment (ident, expr') ->
     let inner = sprintf "%s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr') in
-    if is_value
-    then fn_wrap inner
-    else inner
+    if is_value then fn_wrap inner else inner
   | IfExpr (expr', progn', else') -> if_to_lua it expr' progn' else' ~value:is_value
   | While (expr', progn') -> while_to_lua it expr' progn' ~value:is_value
   | Each (ident', range', progn') -> each_to_lua it ident' range' progn' ~value:is_value

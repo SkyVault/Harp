@@ -33,3 +33,10 @@ let write_string_to_file filename content =
   let oc = open_out filename in
   Printf.fprintf oc "%s" content;
   close_out oc
+
+let filter_chars = function
+  | '-' -> '_'
+  | '*' -> '_'
+  | '+' -> '_'
+  | c -> c
+let ident_to_lua = String.map filter_chars
