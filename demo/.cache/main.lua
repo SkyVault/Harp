@@ -4,6 +4,11 @@ require "../luastd/std"
 require( "prelude")
  local x = 32.0;
  local y = 32.0;
+ local test_fn = nil
+test_fn = function( a, b)
+return (a + b)
+end
+ print( test_fn( 32.0, 32.0))
  on_update( function( dt)
 local ax = (function()
 if love.keyboard.isDown( "d") then

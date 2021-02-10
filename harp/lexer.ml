@@ -15,7 +15,6 @@ type token_value
   | TAtom of string
   | TBol of bool
   | TStr of string
-  | TKeyWord of string
   | TRange
   | TOpenParen
   | TCloseParen
@@ -37,7 +36,6 @@ let tok_to_str = function
   | TAtom a -> sprintf "TAtom '%s'" a
   | TStr s -> sprintf "TStr %s" s
   | TBol b -> sprintf "TBol %s" (if b then "#t" else "#f")
-  | TKeyWord s -> sprintf "TKeyWord %s" s
   | TRange -> ".."
   | TOpenParen -> "("
   | TCloseParen -> ")"
@@ -82,9 +80,24 @@ let get_str (cs: char list): token_value * char list =
     let (str, rest) = loop cs [] in
     (TStr (str |> reverse |> string_of_char_list), rest)
 
+let get_atom_literal (cs: char list): token_value * char list =
+  let rec loop (cs: char list) (res: char list): char list * char list =
+    match cs with
+    | c::rest when (is_ws c) -> (res, (c::rest))
+    | c::rest -> loop rest (c::res)
+    | [] -> (res, [])
+  in
+    let (str, rest) = loop cs [] in
+    (TStr (str |> reverse |> string_of_char_list), rest)
+
 let rec skip_till_newline = function
   | '\n'::rest -> rest
   | _::rest -> skip_till_newline rest
+  | [] -> []
+
+let rec skip_till_ws = function
+  | c::rest when (is_ws c) -> rest
+  | _::rest -> skip_till_ws rest
   | [] -> []
 
 let tokenize (s: string): token list =
@@ -93,6 +106,7 @@ let tokenize (s: string): token list =
     | [] -> res
     | c::rest when (is_ws c) -> loop rest res info
     | ';'::rest -> loop (skip_till_newline rest) res info
+    | ':'::'='::rest -> loop rest ((TAtom ":=", info)::res) info
     | '('::rest -> loop rest ((TOpenParen, info)::res) info
     | ')'::rest -> loop rest ((TCloseParen, info)::res) info
     | '['::rest -> loop rest ((TOpenBracket, info)::res) info
@@ -109,6 +123,9 @@ let tokenize (s: string): token list =
     | '+'::rest -> loop rest (((TAtom "+"), info)::res) info
     | '"'::rest ->
       let (tok, rest') = get_str rest in
+      loop rest' ((tok, info)::res) info
+    | ':'::rest ->
+      let (tok, rest') = get_atom_literal rest in
       loop rest' ((tok, info)::res) info
     | n::rest when is_digit n ->
        let (tok, rest') = (n::rest) |> get_number in

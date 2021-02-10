@@ -1,0 +1,22 @@
+#+TITLE: Todos
+
+* Syntax
+
++ [DONE] Symbol literal
+
+  #+BEGIN_SRC harp
+:my-atom
+  #+END_SRC
+
++ Elif
++ Case of
++ Array indexing
++ Pipe operator
+  this one should have greater presidence then equality but less then the reassignment operator
++ Dict literals
+
+  #+BEGIN_SRC harp
+let myDict := #(:hello 32 :world 123)
+  #+END_SRC
+
+* Typesystem

@@ -1,5 +1,3 @@
-let myVar := 100
-
-myVar <- myVar + 32
+let myVar := :hello-world
 
 print (myVar)
