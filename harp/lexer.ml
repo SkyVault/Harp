@@ -82,11 +82,17 @@ let get_str (cs: char list): token_value * char list =
     let (str, rest) = loop cs [] in
     (TStr (str |> reverse |> string_of_char_list), rest)
 
+let rec skip_till_newline = function
+  | '\n'::rest -> rest
+  | _::rest -> skip_till_newline rest
+  | [] -> []
+
 let tokenize (s: string): token list =
   let rec loop (s: char list) (res: token list) (info: token_info): token list =
     match s with
     | [] -> res
     | c::rest when (is_ws c) -> loop rest res info
+    | ';'::rest -> loop (skip_till_newline rest) res info
     | '('::rest -> loop rest ((TOpenParen, info)::res) info
     | ')'::rest -> loop rest ((TCloseParen, info)::res) info
     | '['::rest -> loop rest ((TOpenBracket, info)::res) info
