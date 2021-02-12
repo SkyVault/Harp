@@ -20,6 +20,9 @@ case animal of
 let dict := #("test": 100 "dict": 20)
 let list := (1 2 3)
 
+;; I Like the .(index) syntax because its like the function call syntax
+;; which is good because dictionaries are like functions, key is the arg
+;; and the value is what is returned
 print (list.(1))        ; prints 2
 print (dict.("test"))   ; prints 100
 

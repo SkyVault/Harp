@@ -4,7 +4,7 @@ open Printf
 let is_alpha = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
 let is_digit = function '0'..'9' -> true | _ -> false
 let is_ws = function ' ' | '\n' | '\t' | '\b' -> true | _ -> false
-let is_sym = function '(' | ')' | '[' | ']' | '{' | '}' -> true | _ -> false
+let is_sym = function '.' | '(' | ')' | '[' | ']' | '{' | '}' -> true | _ -> false
 let char_to_digit chr = float_of_int (Char.code chr - Char.code '0')
 let string_of_char_list = List.to_seq >> String.of_seq
 let float_of_char_list = string_of_char_list >> float_of_string
@@ -15,6 +15,7 @@ type token_value
   | TAtom of string
   | TBol of bool
   | TStr of string
+  | TDot
   | TRange
   | TOpenParen
   | TCloseParen
@@ -36,6 +37,7 @@ let tok_to_str = function
   | TAtom a -> sprintf "TAtom '%s'" a
   | TStr s -> sprintf "TStr %s" s
   | TBol b -> sprintf "TBol %s" (if b then "#t" else "#f")
+  | TDot -> "."
   | TRange -> ".."
   | TOpenParen -> "("
   | TCloseParen -> ")"
@@ -64,7 +66,8 @@ let get_atom (cs: char list): token_value * char list =
     match cs with
     | [] -> (res, [])
     | w::rest when (is_ws w) || (is_sym w) -> (res, w::rest)
-    | c::rest -> loop rest (c::res)
+    | c::rest ->
+      loop rest (c::res)
   in
     let (ss, rest) = loop cs [] in
     let s = ss |> reverse |> string_of_char_list in
@@ -130,11 +133,12 @@ let tokenize (s: string): token list =
     | n::rest when is_digit n ->
        let (tok, rest') = (n::rest) |> get_number in
        loop rest' ((tok, info)::res) info
+    | '.'::rest -> loop rest ((TDot, info)::res) info
     | c::rest when not (is_ws c) ->
        let (tok, rest') = (c::rest) |> get_atom in
        loop rest' ((tok, info)::res) info
-    | c::rest ->
-       printf "Unhandled token '%c'\n" c;
-       loop rest res info
+    | c::_ ->
+        failwith (sprintf "Unhandled token '%c'\n" c);
+       (* loop rest res info *)
   in
     loop (explode s) [] (0, 0) |> reverse

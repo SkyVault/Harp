@@ -70,7 +70,7 @@ and parse_fun_def (ts: token list): Ast.node * token list =
   | [] -> failwith "Empty function definition"
   | (TAtom a, _)::rest' -> begin
      let atom = AtomValue a in
-     let (args, rest') = parse_expr rest' in
+     let (args, rest') = parse_args rest' in
      let (body, rest') = parse_progn rest' in
      match (atom, args, body) with
      | (AtomValue _, List _, Progn _) -> (Fun (atom, args, body), rest')
@@ -79,20 +79,20 @@ and parse_fun_def (ts: token list): Ast.node * token list =
   | _ -> failwith "Function is missing a identifier"
 
 and parse_fun_call (name : Ast.node) (ts : token list) =
-  let (params, rest) = parse_list ts in
+  let (params, rest) = parse_args ts in
   (FunCall (name, params), rest)
 
 and parse_declaration (ts : token list): Ast.node * token list =
   match ts with
   | (TAtom name,_)::(TOpenParen,i)::rest -> begin
-    let (args, rest') = parse_list ((TOpenParen, i)::rest) in
+    let (args, rest') = parse_args ((TOpenParen, i)::rest) in
     match args with
     | List as' -> (Declaration (name, (List.length as')), rest')
     | _ -> failwith "declaration expected args"
   end
   | _ -> failwith "Malformed declaration"
 
-and parse_list (ts: token list): Ast.node * token list =
+and parse_args (ts: token list): Ast.node * token list =
   let rec collect ts ns =
     match ts with
     | (TCloseParen, _)::rest -> (reverse ns, rest)
@@ -102,11 +102,27 @@ and parse_list (ts: token list): Ast.node * token list =
        let new_list = n::ns in
        (collect rest new_list)
   in
-  match ts with
-  | (TOpenParen, _)::rest ->
-     let (ns, rest') = collect rest [] in
-     (List ns, rest')
-  | _ -> parse_expr ts
+    match ts with
+    | (TOpenParen, _)::rest ->
+      let (ns, rest') = collect rest [] in
+      (List ns, rest')
+    | _ -> parse_expr ts
+
+and parse_list (ts: token list): Ast.node * token list =
+  let rec collect ts ns =
+    match ts with
+    | (TCloseBracket, _)::rest -> (reverse ns, rest)
+    | [] -> failwith "Unbalanced parens"
+    | _ ->
+       let (n, rest) = parse_expr ts in
+       let new_list = n::ns in
+       (collect rest new_list)
+  in
+    match ts with
+    | (TOpenBracket, _)::rest ->
+      let (ns, rest') = collect rest [] in
+      (List ns, rest')
+    | _ -> parse_expr ts
 
 and parse_dict (ts: token list): Ast.node * token list =
   match parse_list ts with
@@ -141,11 +157,13 @@ and parse_expr (ts: token list): Ast.node * token list =
   | (TAtom "each", _)::rest -> parse_each_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
   | (TAtom "declare", _)::rest -> parse_declaration rest
-  | (TAtom "#",_)::(TOpenParen,i)::rest ->
-    parse_dict ((TOpenParen, i)::rest)
+  | (TAtom "#",_)::(TOpenBracket,i)::rest ->
+    parse_dict ((TOpenBracket, i)::rest)
+  (* TODO(Dustin): This needs to move down to the primary area so that we can do things
+   * like (fun _ (a) { print ("Hello: " a) })(123) *)
   | (TAtom n,_)::(TOpenParen,i)::rest ->
     parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
-  | (TOpenParen, _)::_ -> parse_list ts
+  | (TOpenBracket, _)::_ -> parse_list ts
   (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
   | _ -> parse_assignment ts
 
@@ -206,10 +224,19 @@ and parse_factor (ts: token list): Ast.node * token list =
 and parse_unary (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom "!", _)::rest ->
-     let p, ts = parse_primary rest in (Unary (Bang, p), ts)
+     let p, ts = parse_dot_operator rest in (Unary (Bang, p), ts)
   | (TAtom "-", _)::rest ->
-     let p, ts = parse_primary rest in (Unary (Neg, p), ts)
-  | _ -> parse_primary ts
+     let p, ts = parse_dot_operator rest in (Unary (Neg, p), ts)
+  | _ -> parse_dot_operator ts
+
+and parse_dot_operator (ts: token list): Ast.node * token list =
+  let rec loop (ts : token list) : Ast.node * token list =
+    let (a, ts') = parse_primary ts in
+    match ts' with
+    | (TDot,_)::rest ->
+      let (b, rs) = loop rest in (Dot (a, b), rs)
+    | _ -> (a, ts')
+  in loop ts
 
 and parse_primary (ts: token list): Ast.node * token list =
   match ts with
@@ -218,8 +245,14 @@ and parse_primary (ts: token list): Ast.node * token list =
   | (TBol b, _)::rest -> (BolValue b, rest)
   | (TAtom a, _)::rest -> (AtomValue a, rest)
   | (TOpenBrace, _)::_ -> parse_progn ts
+  | (TOpenParen, _)::rest -> begin
+    let (n, rest') = parse_expr rest in
+    match rest' with
+    | (TCloseParen,_)::rest' -> (n, rest')
+    | _ -> failwith "Unbalanced parenthises"
+  end
   | (t,_)::_ ->
-     failwith (sprintf "Illegal terminal token '%s'" (tok_to_str t))
+     failwith (sprintf "Illegal primary token '%s'" (tok_to_str t))
   | _ -> failwith "Empty list"
 
 let parse (ts: token list): Ast.node =

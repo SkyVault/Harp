@@ -1,3 +1,0 @@
-let myDict := #(:hello 1 + 23 32 "ananab")
-
-print(myDict)

@@ -34,6 +34,7 @@ let () =
     let ast =
       Common.read_whole_file script
       |> tokenize
+      |> List.map (fun (t, i) -> (printf "T: %s\n" (tok_to_str t)); (t, i))
       |> Parser.parse
     in
       ast |> Ast.to_str |> Printf.printf "\n-=<{ AST OUT }>=-\n%s\n";

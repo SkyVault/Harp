@@ -13,6 +13,7 @@ type node =
   | AtomValue of string
   | StrValue of string
   | BolValue of bool
+  | Dot of node * node
   | Unary of unary * node
   | Factor of factor * node * node
   | Term of term * node * node
@@ -50,6 +51,7 @@ and to_str (ast : node) : string =
   | AtomValue s -> sprintf ":%s" s
   | StrValue s -> sprintf "\"%s\"" s
   | BolValue b -> sprintf "%s" (if b then "#t" else "#f")
+  | Dot (a, b) -> sprintf "%s->%s" (to_str a) (to_str b)
   | Unary (u, ast') -> sprintf "%s%s" (unary_to_str u) (to_str ast')
   | Factor (f, a, b) -> sprintf "(%s %s %s)" (factor_to_str f) (to_str a) (to_str b)
   | Term (t, a, b) -> sprintf "(%s %s %s)" (term_to_str t) (to_str a) (to_str b)
