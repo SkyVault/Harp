@@ -1,36 +1,11 @@
 declare require (i)
+declare on-load (fn)
 declare on-update (fn)
 declare on-draw (fn)
-declare love.keyboard.isDown (k)
-declare love.graphics.rectangle (t x y w h)
+declare key-is-down (k)
+declare draw-rect (t x y w h)
 
 ;; Comment test
 require ("prelude") ; this is an inline comment
 
-let x := 32
-let y := 32
-
-fun test-fn (a b) {
-  a + b
-}
-
-print(test-fn (32 32))
-
-on-update(fun _ (dt) {
-  let ax :=
-    if love.keyboard.isDown ("d") { 1 } else {
-      if love.keyboard.isDown ("a") { -1 } else { 0 }
-    }
-
-  let ay :=
-    if love.keyboard.isDown ("s") { 1 } else {
-      if love.keyboard.isDown ("w") { -1 } else { 0 }
-    }
-
-  x <- x + ax * 200.0 * dt
-  y <- y + ay * 200.0 * dt
-})
-
-on-draw(fun _ () {
-    love.graphics.rectangle ("fill" x y 100 100)
-})
+print(on-load)
