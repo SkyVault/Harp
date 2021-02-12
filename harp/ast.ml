@@ -25,6 +25,7 @@ type node =
   | Each of node * node * node (* Atom, Range, Progn *)
   | While of node * node (* Expr progn *)
   | List of node list
+  | Dict of node list (* K V... *)
   | Declaration of string * int (* name, arity *)
   | Fun of node * node * node (* Atom Args Progn *)
   | FunCall of node * node (* Atom Params *)
@@ -70,5 +71,6 @@ and to_str (ast : node) : string =
   | Declaration (name, arity) -> sprintf "<native:%s>(%d)" name arity
   | Progn ns -> sprintf "{%s }" (list_to_str ns)
   | List ns -> sprintf "[%s]" (list_to_str ns)
+  | Dict kv -> sprintf "{%s}" (list_to_str kv)
   | Terminal -> "EOF"
   | _ -> failwith "Unhandled ast type in to_str"

@@ -108,6 +108,15 @@ and parse_list (ts: token list): Ast.node * token list =
      (List ns, rest')
   | _ -> parse_expr ts
 
+and parse_dict (ts: token list): Ast.node * token list =
+  match parse_list ts with
+  | (List ns, rest) ->
+    if (List.length ns) mod 2 <> 0 then
+      failwith "Odd number of key value elements in dict"
+    else
+      (Dict ns, rest)
+  | _ -> failwith "Parsing the list for dict failed"
+
 and parse_progn (ts: token list): Ast.node * token list =
   let rec collect ts ns =
     match ts with
@@ -132,6 +141,8 @@ and parse_expr (ts: token list): Ast.node * token list =
   | (TAtom "each", _)::rest -> parse_each_expr rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
   | (TAtom "declare", _)::rest -> parse_declaration rest
+  | (TAtom "#",_)::(TOpenParen,i)::rest ->
+    parse_dict ((TOpenParen, i)::rest)
   | (TAtom n,_)::(TOpenParen,i)::rest ->
     parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
   | (TOpenParen, _)::_ -> parse_list ts

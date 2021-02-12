@@ -83,7 +83,7 @@ let get_str (cs: char list): token_value * char list =
 let get_atom_literal (cs: char list): token_value * char list =
   let rec loop (cs: char list) (res: char list): char list * char list =
     match cs with
-    | c::rest when (is_ws c) -> (res, (c::rest))
+    | c::rest when (is_ws c) || (is_sym c) -> (res, (c::rest))
     | c::rest -> loop rest (c::res)
     | [] -> (res, [])
   in
