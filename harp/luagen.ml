@@ -11,23 +11,23 @@ let fn_wrap = sprintf "(function()\n%s\nend)()"
 
 let rec handle_last_val_in_progn it last =
   match last with
-  | LetExpr (AtomValue name,_) ->
+  | LetExpr (AtomValue (_, name),_) ->
     sprintf "%s\nreturn %s" (expr_to_lua it last ~value: true) name
-  | Fun (AtomValue name,_,_) ->
+  | Fun (AtomValue (_, name),_,_) ->
     sprintf "%s\nreturn %s" (expr_to_lua it last ~value: false) name
   | _ -> sprintf "return %s" (expr_to_lua it last ~value: true)
 
 and fun_to_lua ?value:(is_value=false) it atom args progn =
   let rec args_loop args build =
     match args with
-    | (AtomValue a)::[] -> a::build
-    | (AtomValue a)::rest ->
+    | (AtomValue (_, a))::[] -> a::build
+    | (AtomValue (_, a))::rest ->
       args_loop rest (List.append [(sprintf "%s," (ident_to_lua a))] build)
     | [] -> build
     | _ -> build
   in
     match (atom, args, progn) with
-    | (AtomValue a, List ns, Progn ps) ->
+    | (AtomValue (_, a), List ns, Progn ps) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
       let name = ident_to_lua a in
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
@@ -46,7 +46,7 @@ and fun_call_to_lua it atom args =
     | [] -> build
   in
     match (atom, args) with
-    | (AtomValue a, List ns) ->
+    | (AtomValue (_, a), List ns) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
       sprintf "%s(%s)" (ident_to_lua a) args_str
@@ -76,7 +76,7 @@ and while_to_lua it expr progn ~value =
 
 and each_to_lua it ident range progn ~value =
   match (ident, progn) with
-  | (AtomValue i, Progn ns) -> begin
+  | (AtomValue (_, i), Progn ns) -> begin
     match range with
     | AtomValue _ | Range _ ->
       let inner = sprintf "for %s in iter(%s) do\n%s\nend" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false) in
@@ -125,7 +125,7 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | Unary (u, a) -> sprintf "(%s%s)" (unary_to_str u) (expr_to_lua it a)
   | Dot (a, b) -> sprintf "%s[%s]" (expr_to_lua it a) (expr_to_lua it b)
   | Range (min, max) -> sprintf "range(%s, %s)" (expr_to_lua it min) (expr_to_lua it max)
-  | AtomValue a -> ident_to_lua a
+  | AtomValue (_, a) -> ident_to_lua a
   | LetExpr (ident, expr') ->
     sprintf "local %s = %s;" (expr_to_lua it ident) (expr_to_lua ~value:true it expr')
   | Assignment (ident, expr') ->

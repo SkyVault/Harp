@@ -3,9 +3,9 @@ open Harp
 open Harp.Lexer
 
 let generate_project pname =
-    printf "Generating new project '%s'" pname;
-    Sys.command (sprintf "mkdir -p %s" pname) |> ignore;
-    Common.write_string_to_file (sprintf "%s/main.harp" pname) "print (\"Hello World\")"
+  printf "Generating new project '%s'" pname;
+  Sys.command (sprintf "mkdir -p %s" pname) |> ignore;
+  Common.write_string_to_file (sprintf "%s/main.harp" pname) "print (\"Hello World\")"
 
 let write_lua_to_cache pname lua =
   Sys.command (sprintf "mkdir -p %s/.cache" pname) |> ignore;
@@ -34,7 +34,7 @@ let () =
     let ast =
       Common.read_whole_file script
       |> tokenize
-      |> List.map (fun (t, i) -> (printf "T: %s\n" (tok_to_str t)); (t, i))
+      |> List.map (fun (t, i) -> (printf "T: %s %s\n" (tok_to_str t) (tok_info_to_str i)); (t, i))
       |> Parser.parse
     in
       ast |> Ast.to_str |> Printf.printf "\n-=<{ AST OUT }>=-\n%s\n";

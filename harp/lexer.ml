@@ -46,6 +46,8 @@ let tok_to_str = function
   | TOpenBrace -> "{"
   | TCloseBrace -> "}"
 
+let tok_info_to_str (line, column) = sprintf "(%d:%d)" line column
+
 let get_number (cs: char list): token_value * char list =
   let rec loop (cs: char list) (decimal: bool) (res: char list): char list * char list =
     match cs with
@@ -107,8 +109,9 @@ let tokenize (s: string): token list =
   let rec loop (s: char list) (res: token list) (info: token_info): token list =
     match s with
     | [] -> res
+    | c::rest when c = '\n' -> let l,c = info in loop rest res (l+1, c)
     | c::rest when (is_ws c) -> loop rest res info
-    | ';'::rest -> loop (skip_till_newline rest) res info
+    | ';'::rest -> let l,c = info in loop (skip_till_newline rest) res (l+1, c)
     | ':'::'='::rest -> loop rest ((TAtom ":=", info)::res) info
     | '('::rest -> loop rest ((TOpenParen, info)::res) info
     | ')'::rest -> loop rest ((TCloseParen, info)::res) info
@@ -141,4 +144,4 @@ let tokenize (s: string): token list =
         failwith (sprintf "Unhandled token '%c'\n" c);
        (* loop rest res info *)
   in
-    loop (explode s) [] (0, 0) |> reverse
+    loop (explode s) [] (1, 0) |> reverse

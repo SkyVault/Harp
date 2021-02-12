@@ -1,5 +1,6 @@
 open Printf
 open Common
+open Lexer
 
 type equality = Neq | Eq
 type comparison = Gr | Gre | Le | Lee
@@ -10,7 +11,7 @@ type unary = Neg | Bang
 type node =
   | Terminal
   | NumValue of float
-  | AtomValue of string
+  | AtomValue of token_info * string
   | StrValue of string
   | BolValue of bool
   | Dot of node * node
@@ -48,7 +49,7 @@ and list_to_str_app (asts : node list) (append : string) : string =
 and to_str (ast : node) : string =
   match ast with
   | NumValue v -> sprintf "%f" v
-  | AtomValue s -> sprintf ":%s" s
+  | AtomValue (_, s) -> sprintf ":%s" s
   | StrValue s -> sprintf "\"%s\"" s
   | BolValue b -> sprintf "%s" (if b then "#t" else "#f")
   | Dot (a, b) -> sprintf "%s->%s" (to_str a) (to_str b)

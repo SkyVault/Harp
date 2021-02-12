@@ -23,9 +23,9 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
 
 let rec parse_let_expr (ts: token list): Ast.node * token list =
   match ts with
-  | (TAtom a, _)::(TAtom ":=", _)::rest ->
+  | (TAtom a, info)::(TAtom ":=", _)::rest ->
      let (expr, rest') = parse_expr rest in
-     (LetExpr (AtomValue a, expr), rest')
+     (LetExpr (AtomValue (info, a), expr), rest')
   | _ -> failwith "Malformed let expression"
 
 and parse_if_expr (ts: token list): Ast.node * token list =
@@ -60,7 +60,7 @@ and parse_each_expr (ts: token list): Ast.node * token list =
     match rest' with
     | (TOpenBrace, i)::rest' ->
       let (progn, rest') = (parse_progn ((TOpenBrace, i)::rest')) in
-      (Each (AtomValue ident, range, progn), rest')
+      (Each (AtomValue (i, ident), range, progn), rest')
     | _ -> failwith "Each is missing body"
   end
   | _ -> failwith "Each requires an ident and the in keyword"
@@ -68,8 +68,8 @@ and parse_each_expr (ts: token list): Ast.node * token list =
 and parse_fun_def (ts: token list): Ast.node * token list =
   match ts with
   | [] -> failwith "Empty function definition"
-  | (TAtom a, _)::rest' -> begin
-     let atom = AtomValue a in
+  | (TAtom a, info)::rest' -> begin
+     let atom = AtomValue (info, a) in
      let (args, rest') = parse_args rest' in
      let (body, rest') = parse_progn rest' in
      match (atom, args, body) with
@@ -161,8 +161,8 @@ and parse_expr (ts: token list): Ast.node * token list =
     parse_dict ((TOpenBracket, i)::rest)
   (* TODO(Dustin): This needs to move down to the primary area so that we can do things
    * like (fun _ (a) { print ("Hello: " a) })(123) *)
-  | (TAtom n,_)::(TOpenParen,i)::rest ->
-    parse_fun_call (AtomValue n) ((TOpenParen, i)::rest)
+  | (TAtom n, info)::(TOpenParen,i)::rest ->
+    parse_fun_call (AtomValue (info, n)) ((TOpenParen, i)::rest)
   | (TOpenBracket, _)::_ -> parse_list ts
   (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
   | _ -> parse_assignment ts
@@ -243,7 +243,7 @@ and parse_primary (ts: token list): Ast.node * token list =
   | (TNum n, _)::rest -> (NumValue n, rest)
   | (TStr s, _)::rest -> (StrValue s, rest)
   | (TBol b, _)::rest -> (BolValue b, rest)
-  | (TAtom a, _)::rest -> (AtomValue a, rest)
+  | (TAtom a, info)::rest -> (AtomValue (info, a), rest)
   | (TOpenBrace, _)::_ -> parse_progn ts
   | (TOpenParen, _)::rest -> begin
     let (n, rest') = parse_expr rest in
