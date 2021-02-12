@@ -92,6 +92,18 @@ and list_to_lua it (es : node list) : string =
   let inn = es |> List.map (fun e -> (expr_to_lua it e) ^ ",") |> cat_strings in
   sprintf "{%s}" inn
 
+and dict_to_lua it (es : node list) : string =
+  let rec loop (ns : node list) (bs : string list) : string list =
+    match ns with
+    | (StrValue k)::v::rest ->
+      loop rest ((sprintf "['%s'] = %s," k (expr_to_lua it v))::bs)
+    | (NumValue k)::v::rest ->
+      loop rest ((sprintf "[%d] = %s," (int_of_float k) (expr_to_lua it v))::bs)
+    | [] -> bs
+    | _ -> failwith "Dict to lua failure"
+  in
+    loop es [] |> cat_strings |> sprintf "{%s}"
+
 and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   let expr_ab a mid b =
     sprintf "(%s %s %s)" (expr_to_lua it a) mid (expr_to_lua it b)
@@ -124,6 +136,7 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | Fun (atom', args', progn') -> fun_to_lua it atom' args' progn' ~value:is_value
   | FunCall (atom', params') -> fun_call_to_lua it atom' params'
   | List es -> list_to_lua it es
+  | Dict es -> dict_to_lua it es
   | Declaration _ -> ""
   | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
