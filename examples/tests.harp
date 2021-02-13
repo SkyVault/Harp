@@ -1,5 +1,7 @@
 
 
+fun b (a b c) {
+    a / b / d
+}
 
-
-let a := b()
+let a := b(1 2 3)

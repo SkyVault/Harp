@@ -1,3 +1,5 @@
+open Printf
+
 let (<<) f g x = f(g(x))
 let (>>) f g x = g(f(x))
 let (>>|) r f = Result.map f r
@@ -39,4 +41,9 @@ let filter_chars = function
   | '*' -> '_'
   | '+' -> '_'
   | c -> c
+
 let ident_to_lua = String.map filter_chars
+
+let log_error (line,column) msg =
+  eprintf "error (%d:%d): %s" line column msg;
+  exit 1

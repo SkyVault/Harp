@@ -1,8 +1,9 @@
 require "../luastd/range"
 require "../luastd/std"
 
-local my_fun = nil
-my_fun = function( a, b)
-return (a + (b / 2.0))
+local b = nil
+b = function( a, b, c)
+return (a / (b / d))
 end
-return print( my_fun( 10.0, 20.0))
+local a = b( 1.0, 2.0, 3.0);
+return a

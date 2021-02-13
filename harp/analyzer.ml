@@ -1,6 +1,5 @@
 open Ast
 open Printf
-open Lexer
 
 type types =
   | Any
@@ -74,13 +73,14 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
   | FunCall (AtomValue (info, atom), List ps) ->
     if not (var_defined state.env atom)
-    then failwith (sprintf "Error%s:: function '%s' is undefined" (tok_info_to_str info) atom)
+    then Common.log_error info (sprintf "function '%s' is undefined" atom)
     else begin
       let fn = var_find state.env atom in
       match fn with
       | Some { ident = _; t = _;  v = VarFun a } ->
-        if a.arity <> (List.length ps)
-        then failwith (sprintf "Wrong number of arguments for function '%s'" atom)
+        let passed = (List.length ps) in
+        if a.arity <> passed
+        then Common.log_error info (sprintf "Wrong number of arguments for function '%s', got %d but expected %d" atom passed a.arity)
         else (FunCall (AtomValue (info, atom), List (analyze_node_list state ps)), state)
       | Some {ident = _; t = _; v = VarAny } ->
         (* TODO(Dustin): Arity check on passed functions *)
@@ -131,7 +131,7 @@ and analyze_primary state prim =
   match prim with
   | AtomValue (info, name) ->
     if not (var_defined state.env name)
-    then failwith (Printf.sprintf "Error%s:: variable '%s' is undefined" (tok_info_to_str info) name)
+    then Common.log_error info (sprintf "variable '%s' is undefined" name)
     else prim
   | v -> v
 
