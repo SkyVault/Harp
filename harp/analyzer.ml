@@ -130,6 +130,7 @@ and analyze_unary state un =
 and analyze_primary state prim =
   match prim with
   | AtomValue (info, name) ->
+    dump_env state;
     if not (var_defined state.env name)
     then Common.log_error info (sprintf "variable '%s' is undefined" name)
     else prim

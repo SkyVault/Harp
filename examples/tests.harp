@@ -1,7 +1,11 @@
+let a := 1
+let b := 2
+let c := 3
 
+let x := a / b / d
 
-fun b (a b c) {
-    a / b / d
-}
-
-let a := b(1 2 3)
+;fun b (a b c) {
+;    a / b / d
+;}
+;
+;let a := b(1 2 3)
