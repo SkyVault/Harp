@@ -8,15 +8,16 @@
 :my-atom
   #+END_SRC
 
-+ Dict literals
-+ Elif
-+ Case of
-+ Array indexing
-+ Pipe operator
-  this one should have greater presidence then equality but less then the reassignment operator
++ [DONE] Dict literals
 
   #+BEGIN_SRC harp
 let myDict := #(:hello 32 :world 123)
   #+END_SRC
+
++ [DONE] Array indexing
++ Elif
++ Case of
++ Pipe operator
+  this one should have greater presidence then equality but less then the reassignment operator
 
 * Typesystem

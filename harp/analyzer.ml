@@ -95,36 +95,36 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
 and analyze_equality state eq =
   match eq with
   | Equality (e, a, b) ->
-    Equality (e, analyze_comparison state a, analyze_comparison state b)
+    Equality (e, analyze_equality state a, analyze_equality state b)
   | e -> analyze_comparison state e
 
 and analyze_comparison state comp =
   match comp with
   | Comparison (g, a, b) ->
-    Comparison (g, analyze_range state a, analyze_range state b)
+    Comparison (g, analyze_comparison state a, analyze_comparison state b)
   | r -> analyze_range state r
 
 and analyze_range state range =
   match range with
   | Range (min, max) ->
-    Range (analyze_term state min, analyze_term state max)
+    Range (analyze_range state min, analyze_range state max)
   | term -> analyze_term state term
 
 and analyze_term state te =
   match te with
-  | Term (op, a, b) -> Term (op, analyze_factor state a, analyze_factor state b)
+  | Term (op, a, b) -> Term (op, analyze_term state a, analyze_term state b)
   | f -> analyze_factor state f
 
 and analyze_factor state fa =
   match fa with
   | Factor (op, a, b) ->
-    Factor (op, analyze_unary state a, analyze_unary state b)
+    Factor (op, analyze_factor state a, analyze_factor state b)
   | un -> analyze_unary state un
 
 and analyze_unary state un =
   match un with
-  | Unary (Neg, prim) -> Unary (Neg, analyze_primary state prim)
-  | Unary (Bang, prim) -> Unary (Bang, analyze_primary state prim)
+  | Unary (Neg, prim) -> Unary (Neg, analyze_unary state prim)
+  | Unary (Bang, prim) -> Unary (Bang, analyze_unary state prim)
   | p -> analyze_primary state p
 
 and analyze_primary state prim =
