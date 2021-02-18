@@ -60,6 +60,15 @@ and if_to_lua it expr progn else' ~value =
     | Some (Progn es) ->
       let inner = sprintf "if %s then\n%s\nelse\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:true) (progn_to_lua it es ~ret:value) in
       if value then fn_wrap inner else inner
+    | Some (IfExpr (expr', progn', else')) ->
+      let inner = sprintf
+        "if %s then\n%s\nelse\n%s%s\nend"
+        (expr_to_lua it expr)
+        (progn_to_lua it ns ~ret:true)
+        (if value then " return " else "")
+        (if_to_lua it expr' progn' else' ~value:value)
+      in
+        if value then fn_wrap inner else inner
     | _ ->
       let inner = sprintf "if %s then\n%s\nend" (expr_to_lua it expr) (progn_to_lua it ns ~ret:value) in
       if value then fn_wrap inner else inner

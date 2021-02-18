@@ -1,5 +1,12 @@
-fun myFun (a b) {
-    a + b
+let input := read()
+
+let v := if input = "a" {
+  "aaaaaaaa"
+} elif input = "b" {
+  "bbbbbbbbb"
+} else {
+  "WHAT?"
 }
 
-let myList := [1 myFun(1/2 1) 3]
+print("V:")
+print(v)

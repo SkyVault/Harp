@@ -72,6 +72,11 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
     let func_state = { env = (List.append state.env (vardef::vals)) } in
     let new_state = { env = vardef::state.env } in
     (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
+  | List ns -> (List (analyze_node_list state ns), state)
+  | Dot (a, b) ->
+    let (a', state') = (analyze_expr state a) in
+    let (b', state') = (analyze_expr state' b) in
+    (Dot (a', b'), state')
   | FunCall (AtomValue (info, atom), List ps) ->
     if not (var_defined state.env atom)
     then Common.log_error info (sprintf "function '%s' is undefined" atom)

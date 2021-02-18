@@ -1,9 +1,19 @@
 require "../luastd/range"
 require "../luastd/std"
 
-local myFun = nil
-myFun = function( a, b)
-return (a + b)
+local input = read();
+ local v = (function()
+if (input == "a") then
+return "aaaaaaaa"
+else
+ return (function()
+if (input == "b") then
+return "bbbbbbbbb"
+else
+return "WHAT?"
 end
-local myList = { 1.0, myFun( (1.0 / 2.0), 1.0), 3.0,};
-return myList
+end)()
+end
+end)();
+ print( "V:")
+return print( v)
