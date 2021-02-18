@@ -1,4 +1,5 @@
 open Printf
+open Tok_info
 
 let (<<) f g x = f(g(x))
 let (>>) f g x = g(f(x))
@@ -44,6 +45,6 @@ let filter_chars = function
 
 let ident_to_lua = String.map filter_chars
 
-let log_error (line,column) msg =
-  eprintf "error (%d:%d): %s" line column msg;
+let log_error info msg =
+  eprintf "error (%d:%d): %s" info.line info.column msg;
   exit 1

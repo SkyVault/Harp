@@ -1,5 +1,6 @@
 open Common
 open Printf
+open Tok_info
 
 let is_alpha = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
 let is_digit = function '0'..'9' -> true | _ -> false
@@ -16,6 +17,7 @@ type token_value
   | TBol of bool
   | TStr of string
   | TDot
+  | TComma
   | TRange
   | TOpenParen
   | TCloseParen
@@ -23,8 +25,6 @@ type token_value
   | TCloseBracket
   | TOpenBrace
   | TCloseBrace
-
-type token_info = int * int
 
 type token = token_value * token_info
 
@@ -38,6 +38,7 @@ let tok_to_str = function
   | TStr s -> sprintf "TStr %s" s
   | TBol b -> sprintf "TBol %s" (if b then "#t" else "#f")
   | TDot -> "."
+  | TComma -> ","
   | TRange -> ".."
   | TOpenParen -> "("
   | TCloseParen -> ")"
@@ -45,8 +46,6 @@ let tok_to_str = function
   | TCloseBracket -> "]"
   | TOpenBrace -> "{"
   | TCloseBrace -> "}"
-
-let tok_info_to_str (line, column) = sprintf "(%d:%d)" line column
 
 let get_number (cs: char list): token_value * char list =
   let rec loop (cs: char list) (decimal: bool) (res: char list): char list * char list =
@@ -109,9 +108,11 @@ let tokenize (s: string): token list =
   let rec loop (s: char list) (res: token list) (info: token_info): token list =
     match s with
     | [] -> res
-    | c::rest when c = '\n' -> let l,c = info in loop rest res (l+1, c)
+    | c::rest when c = '\n' -> loop rest res { info with line = info.line + 1 }
+    | c::'('::rest when (is_ws c) ->
+      loop rest ((TOpenParen, { info with ws_before = true })::res) info
     | c::rest when (is_ws c) -> loop rest res info
-    | ';'::rest -> let l,c = info in loop (skip_till_newline rest) res (l+1, c)
+    | ';'::rest -> loop (skip_till_newline rest) res { info with line = info.line + 1 }
     | ':'::'='::rest -> loop rest ((TAtom ":=", info)::res) info
     | '('::rest -> loop rest ((TOpenParen, info)::res) info
     | ')'::rest -> loop rest ((TCloseParen, info)::res) info
@@ -144,4 +145,4 @@ let tokenize (s: string): token list =
         failwith (sprintf "Unhandled token '%c'\n" c);
        (* loop rest res info *)
   in
-    loop (explode s) [] (1, 0) |> reverse
+    loop (explode s) [] { line=1; column=0; ws_before=false } |> reverse

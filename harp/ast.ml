@@ -1,6 +1,6 @@
 open Printf
 open Common
-open Lexer
+open Tok_info
 
 type equality = Neq | Eq
 type comparison = Gr | Gre | Le | Lee

@@ -1,5 +1,5 @@
 open Printf
-open Lexer
+open Tok_info
 
 type t = Nothing
        | Num of float * token_info
@@ -14,18 +14,19 @@ type t = Nothing
        | Env of ((t * t) list)
 
 let get_token_info v =
+  let default = {line=0; column=0;ws_before=false} in
   match v with
-  | Nothing -> (0, 0)
+  | Nothing -> default
   | Num (_, i) -> i
   | Atom (_, i) -> i
   | Str (_, i) -> i
   | Bol (_, i) -> i
-  | Env _ -> (0, 0)
+  | Env _ -> default
   | Func (_, i) -> i
-  | NatFunc _ -> (0, 0)
+  | NatFunc _ -> default
   | List (_, i) -> i
   | Seq (_, i) -> i
-  | Progn _ -> (0, 0)
+  | Progn _ -> default
 
 let rec print_value (v: t): unit =
   match v with

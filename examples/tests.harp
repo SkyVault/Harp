@@ -1,8 +1,5 @@
-let x := 1
-let y := 2
-
-fun test () {
-    x / y / y
+fun myFun (a b) {
+    a + b
 }
 
-print (test ())
+let myList := [1 myFun(1/2 1) 3]

@@ -2,6 +2,7 @@
 (* open Printf *)
 open Ast
 open Lexer
+open Tok_info
 open Common
 open Printf
 (* open Common *)
@@ -20,6 +21,17 @@ unary          → ( "!" | "-" ) unary
 primary        → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
 *)
+
+(*
+ * NOTE(Dustin): We will need to fix our syntax a bit, the issue is with function calling and expressions,
+ * an example of the problem: let xs := [1 (1/2) 3], the issue is that the parser thinks that its a function call 1(1/2) where 1 is the function
+ * some solutions:
+ * 1. Change the function call syntax
+ *  we could make function calls look like: myFunc.(100 200 300), or even change the parens to brackets or something
+ * 2. Introduce the comma operator to seperate elements
+ * 3. only allow function calls on atoms, so no (fun (a) { a + 1 }) (32)
+ * 4. Use spaces, so 1 (1/2)  isn't an issue, but 1(1/2) is.
+ *  *)
 
 let rec parse_let_expr (ts: token list): Ast.node * token list =
   match ts with
@@ -149,7 +161,17 @@ and parse_progn (ts: token list): Ast.node * token list =
       (Progn ns, rest')
     | _ -> parse_expr ts
 
-and parse_expr (ts: token list): Ast.node * token list =
+and parse_expr (ts : token list): Ast.node * token list =
+  let (callable, rest') = parse_expr_2 ts in
+  match rest' with
+  | (TOpenParen,i)::rest' ->
+    if i.ws_before then
+      (callable, (TOpenParen, i)::rest')
+    else
+      parse_fun_call (callable) ((TOpenParen, i)::rest')
+  | _ -> (callable, rest')
+
+and parse_expr_2 (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
@@ -159,12 +181,9 @@ and parse_expr (ts: token list): Ast.node * token list =
   | (TAtom "declare", _)::rest -> parse_declaration rest
   | (TAtom "#",_)::(TOpenBracket,i)::rest ->
     parse_dict ((TOpenBracket, i)::rest)
-  (* TODO(Dustin): This needs to move down to the primary area so that we can do things
-   * like (fun _ (a) { print ("Hello: " a) })(123) *)
-  | (TAtom n, info)::(TOpenParen,i)::rest ->
-    parse_fun_call (AtomValue (info, n)) ((TOpenParen, i)::rest)
+  (* | (TAtom n, info)::(TOpenParen,i)::rest ->
+   *   parse_fun_call (AtomValue (info, n)) ((TOpenParen, i)::rest) *)
   | (TOpenBracket, _)::_ -> parse_list ts
-  (* | (TAtom "fun", _)::rest -> parse_fun_def rest *)
   | _ -> parse_assignment ts
 
 and parse_assignment (ts: token list): Ast.node * token list =
@@ -257,6 +276,7 @@ and parse_primary (ts: token list): Ast.node * token list =
 
 let parse (ts: token list): Ast.node =
   (* Wrap the token list in parens to make it a progn *)
-  let wrapped = (TOpenBrace, (0, 0))::ts@[(TCloseBrace, (0, 0))] in
+  let default = {line=0;column=0;ws_before=false} in
+  let wrapped = (TOpenBrace, default)::ts@[(TCloseBrace, default)] in
   let (v, _) = parse_progn wrapped in
   v

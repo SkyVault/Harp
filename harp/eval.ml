@@ -1,11 +1,14 @@
 open Printf
 open Common
 open Value
+open Tok_info
+
+let default = { line = 0; column = 0; ws_before = false; }
 
 let rec eval_expr (env: Value.t) (expr: Value.t): Value.t * Value.t=
   let func_call env atom args =
     match (eval_expr env atom) with
-    | (_, NatFunc fn) -> fn env (List (args, (0, 0)))
+    | (_, NatFunc fn) -> fn env (List (args, default))
     | (_, Func ((params, fenv, progn), i)) ->
       let func = (Func ((params, fenv, progn), i)) in
       let evalued = List.map (fun a -> evalV env a) args in
@@ -18,8 +21,8 @@ let rec eval_expr (env: Value.t) (expr: Value.t): Value.t * Value.t=
        print_value atom;
        (env, Nothing)
     | (_, v) ->
-      let (line, chr) = get_token_info v in
-      printf "(%d, %d) Cannot apply (" line chr;
+      let i = get_token_info v in
+      printf "(%d, %d) Cannot apply (" i.line i.column;
       print_value v;
       printf ")\n";
       (env, Nothing)
