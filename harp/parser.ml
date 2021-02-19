@@ -265,6 +265,17 @@ and parse_primary (ts: token list): Ast.node * token list =
   | (TNum n, _)::rest -> (NumValue n, rest)
   | (TStr s, _)::rest -> (StrValue s, rest)
   | (TBol b, _)::rest -> (BolValue b, rest)
+  | (TAtom name, ai)::(TOpenParen, pi)::rest -> begin
+    (* NOTE(Dustin): this is a bit of a hack, we should be handling ai
+     * function call cases, but I'm not sure of a good way to do it, so for now
+     * we will only handle function calls where the callable is a atom, we should
+     * improve the analyzer to warn the user when they try other callable things like
+     * a lambda *)
+    if pi.ws_before then
+      (AtomValue (ai, name), (TOpenParen, pi)::rest)
+    else
+      parse_fun_call (AtomValue (ai, name)) ((TOpenParen, pi)::rest)
+  end
   | (TAtom a, info)::rest -> (AtomValue (info, a), rest)
   | (TOpenBrace, _)::_ -> parse_progn ts
   | (TOpenParen, _)::rest -> begin

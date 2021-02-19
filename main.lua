@@ -1,19 +1,16 @@
 require "../luastd/range"
 require "../luastd/std"
 
-local input = read();
- local v = (function()
-if (input == "a") then
-return "aaaaaaaa"
-else
- return (function()
-if (input == "b") then
-return "bbbbbbbbb"
-else
-return "WHAT?"
+local a = nil
+a = function()
+return 100.0
 end
-end)()
+ local b = nil
+b = function()
+return 200.0
 end
-end)();
- print( "V:")
-return print( v)
+ local c = nil
+c = function()
+return 4300.0
+end
+return print( (a() * (b() / c())))

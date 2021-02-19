@@ -1,4 +1,3 @@
-
 _G.on_load = function(fn)
   function love.load()
     fn()

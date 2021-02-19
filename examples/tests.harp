@@ -1,12 +1,5 @@
-let input := read()
+fun a() { 100 }
+fun b() {200}
+fun c() {4300}
 
-let v := if input = "a" {
-  "aaaaaaaa"
-} elif input = "b" {
-  "bbbbbbbbb"
-} else {
-  "WHAT?"
-}
-
-print("V:")
-print(v)
+print(a() * b() / c())

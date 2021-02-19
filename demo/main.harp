@@ -1,11 +1,108 @@
-declare require (i)
-declare on-load (fn)
-declare on-update (fn)
-declare on-draw (fn)
-declare key-is-down (k)
-declare draw-rect (t x y w h)
+declare on-load(fn)
+declare on-draw(fn)
+declare on-update(fn)
+declare draw-rect(t x y w h)
+declare set-color(r g b a)
+declare is-key-down(k)
+declare is-mouse-down(k)
+declare rand()
+declare atan2(x y)
+declare cos(x y)
+declare sin(x y)
 
-;; Comment test
-require ("prelude") ; this is an inline comment
+fun make-rect(x y w h) {
+  #[:x x :y y :width w :height h]
+}
 
-print(on-load)
+fun make-player(x y) {
+  make-rect(x y 16 16)
+}
+
+fun make-enemy(x y) {
+  make-rect(x y 16 16)
+}
+
+fun make-bullet(x y direction dt) {
+  let self := make-rect(x y 8 8)
+  self.vx <- cos(direction) * 100.0 * dt
+  self.vy <- sin(direction) * 100.0 * dt
+}
+
+let player := make-player(10 10)
+
+let enemies := []
+let bullets := []
+let timer := 0
+let max-timer := 1
+
+fun spawn-bullet(x y direction dt) {
+    let b := make-bullet(x y direction dt)
+    push(bullets b)
+}
+
+fun update-player(dt) {
+  let sx :=
+    if is-key-down("a") {-1}
+    elif is-key-down("d") {1}
+    else {0}
+
+  let sy :=
+    if is-key-down("w") {-1}
+    elif is-key-down("s") {1}
+    else {0}
+
+  player.:x <- player.:x + dt * sx * 100.0
+  player.:y <- player.:y + dt * sy * 100.0
+}
+
+fun spawn-enemy() {
+  let x := rand() * 640
+  let y := rand() * 480
+  print("Spawning enemy")
+  push(enemies make-enemy(x y))
+}
+
+fun update-enemy(enemy dt) {
+  let dir := atan2(
+    player.:y - enemy.:y
+    player.:x - enemy.:x
+  )
+
+  let dx := cos(dir) * dt * 100.0
+  let dy := sin(dir) * dt * 100.0
+
+  enemy.:x <- enemy.:x + dx
+  enemy.:y <- enemy.:y + dy
+}
+
+on-load(fun _() {
+
+})
+
+on-update(fun _(dt) {
+  update-player(dt)
+
+  each enemy in enemies {
+    update-enemy(enemy dt)
+  }
+
+  if timer > max-timer {
+    ; spawn an enemy
+    spawn-enemy()
+    timer <- 0
+  }
+
+  timer <- timer + dt
+})
+
+on-draw(fun _() {
+  set-color(1.0 1.0 1.0 1.0)
+
+  set-color(1.0 1.0 0.0 1.0)
+  draw-rect(:fill player.:x player.:y player.:width player.:height)
+
+  set-color(1.0 0.0 0.0 1.0)
+  each enemy in enemies {
+    draw-rect(:fill enemy.:x enemy.:y enemy.:width enemy.:height)
+  }
+})
