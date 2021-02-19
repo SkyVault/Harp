@@ -1,7 +1,18 @@
 require "../luastd/range"
 require "../luastd/std"
 
-local make_rect = nil
+local mouse_left = 1.0;
+ local filter = nil
+filter = function( fn, xs)
+local ns = {};
+ for i in iter(range(0.0, (len( xs) - 1.0))) do
+if fn( xs[(len( xs) - i)]) then
+push( ns, xs[i])
+end
+end
+return ns
+end
+ local make_rect = nil
 make_rect = function( x, y, w, h)
 return { ['height'] = h, ['width'] = w, ['y'] = y, ['x'] = x,}
 end
@@ -16,16 +27,21 @@ end
  local make_bullet = nil
 make_bullet = function( x, y, direction, dt)
 local self = make_rect( x, y, 8.0, 8.0);
- self[vx] = (cos( direction) * (100.0 * dt));
-return (function()
-self[vy] = (sin( direction) * (100.0 * dt));
-end)()
+ self["vx"] = (cos( direction) * (10000.0 * dt));
+ self["vy"] = (sin( direction) * (10000.0 * dt));
+ self["life"] = 0.2;
+return self
 end
- local player = make_player( 10.0, 10.0);
+ local player = make_player( 200.0, 200.0);
  local enemies = {};
  local bullets = {};
  local timer = 0.0;
  local max_timer = 1.0;
+ local spawn_bullet = nil
+spawn_bullet = function( x, y, direction, dt)
+local b = make_bullet( x, y, direction, dt);
+return push( bullets, b)
+end
  local update_player = nil
 update_player = function( dt)
 local sx = (function()
@@ -54,6 +70,10 @@ end
 end)()
 end
 end)();
+ if is_mouse_down( mouse_left) then
+local direction = atan2( (get_mouse_y() - player["y"]), (get_mouse_x() - player["x"]));
+spawn_bullet( player["x"], player["y"], direction, dt)
+end
  player["x"] = (player["x"] + (dt * (sx * 100.0)));
 return (function()
 player["y"] = (player["y"] + (dt * (sy * 100.0)));
@@ -84,6 +104,13 @@ update_player( dt)
  for enemy in iter(enemies) do
 update_enemy( enemy, dt)
 end
+ for bullet in iter(bullets) do
+bullet["x"] = (bullet["x"] + (bullet["vx"] * dt));
+bullet["y"] = (bullet["y"] + (bullet["vy"] * dt));
+end
+ bullets = filter( function( b)
+return (b["life"] >= 0.0)
+end, bullets);
  if (timer > max_timer) then
 spawn_enemy()
 timer = 0.0;
@@ -97,9 +124,13 @@ set_color( 1.0, 1.0, 1.0, 1.0)
  set_color( 1.0, 1.0, 0.0, 1.0)
  draw_rect( "fill", player["x"], player["y"], player["width"], player["height"])
  set_color( 1.0, 0.0, 0.0, 1.0)
-return (function()
-for enemy in iter(enemies) do
+ for enemy in iter(enemies) do
 draw_rect( "fill", enemy["x"], enemy["y"], enemy["width"], enemy["height"])
+end
+ set_color( 1.0, 1.0, 1.0, 1.0)
+return (function()
+for bullet in iter(bullets) do
+draw_rect( "fill", bullet["x"], bullet["y"], bullet["width"], bullet["height"])
 end
 end)()
 end)

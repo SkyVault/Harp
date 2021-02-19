@@ -1,7 +1,6 @@
 #+TITLE: Todos
 
 * Syntax
-
 + [DONE] Symbol literal
 
   #+BEGIN_SRC harp

@@ -1,5 +1,7 @@
-function push(xs, x)
-  table.insert(xs, x)
+push = table.insert
+remove = table.remove
+len = function(xs)
+  return #xs
 end
 
 function nth(xs, i)
@@ -33,6 +35,8 @@ end
 set_color = love.graphics.setColor
 is_key_down = love.keyboard.isDown
 is_mouse_down = love.mouse.isDown
+get_mouse_x = love.mouse.getX
+get_mouse_y = love.mouse.getY
 
 rand = function()
   return math.random()

@@ -153,6 +153,8 @@ let analyze_ast = function
       (mk_fundef "print" 1);
       (mk_fundef "range" 2);
       (mk_fundef "push" 2);
+      (mk_fundef "remove" 2);
+      (mk_fundef "len" 1);
       (mk_fundef "nth" 2);
       (mk_fundef "read" 0);
     ] } ns)

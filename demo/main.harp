@@ -5,10 +5,25 @@ declare draw-rect(t x y w h)
 declare set-color(r g b a)
 declare is-key-down(k)
 declare is-mouse-down(k)
+declare get-mouse-x ()
+declare get-mouse-y ()
 declare rand()
 declare atan2(x y)
 declare cos(x y)
 declare sin(x y)
+declare remove(xs i)
+
+let mouse-left := 1
+
+fun filter(fn xs) {
+  let ns := []
+  each i in 0..len(xs) - 1 {
+    if fn(xs.((len(xs) - i))) {
+      push(ns xs.(i))
+    }
+  }
+  ns
+}
 
 fun make-rect(x y w h) {
   #[:x x :y y :width w :height h]
@@ -24,11 +39,13 @@ fun make-enemy(x y) {
 
 fun make-bullet(x y direction dt) {
   let self := make-rect(x y 8 8)
-  self.vx <- cos(direction) * 100.0 * dt
-  self.vy <- sin(direction) * 100.0 * dt
+  self.:vx <- cos(direction) * 10000.0 * dt
+  self.:vy <- sin(direction) * 10000.0 * dt
+  self.:life <- 0.2
+  self
 }
 
-let player := make-player(10 10)
+let player := make-player(200 200)
 
 let enemies := []
 let bullets := []
@@ -50,6 +67,15 @@ fun update-player(dt) {
     if is-key-down("w") {-1}
     elif is-key-down("s") {1}
     else {0}
+
+  if is-mouse-down(mouse-left) {
+    let direction := atan2(
+      get-mouse-y() - player.:y
+      get-mouse-x() - player.:x
+    )
+
+    spawn-bullet(player.:x player.:y direction dt)
+  }
 
   player.:x <- player.:x + dt * sx * 100.0
   player.:y <- player.:y + dt * sy * 100.0
@@ -86,6 +112,15 @@ on-update(fun _(dt) {
     update-enemy(enemy dt)
   }
 
+  each bullet in bullets {
+    bullet.:x <- bullet.:x + bullet.:vx * dt
+    bullet.:y <- bullet.:y + bullet.:vy * dt
+  }
+
+  bullets <- filter(fun _(b){
+    b.:life <= 0
+  } bullets)
+
   if timer > max-timer {
     ; spawn an enemy
     spawn-enemy()
@@ -104,5 +139,10 @@ on-draw(fun _() {
   set-color(1.0 0.0 0.0 1.0)
   each enemy in enemies {
     draw-rect(:fill enemy.:x enemy.:y enemy.:width enemy.:height)
+  }
+
+  set-color(1.0 1.0 1.0 1.0)
+  each bullet in bullets {
+    draw-rect(:fill bullet.:x bullet.:y bullet.:width bullet.:height)
   }
 })
