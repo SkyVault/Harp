@@ -1,17 +1,4 @@
-declare on-load(fn)
-declare on-draw(fn)
-declare on-update(fn)
-declare draw-rect(t x y w h)
-declare set-color(r g b a)
-declare is-key-down(k)
-declare is-mouse-down(k)
-declare get-mouse-x ()
-declare get-mouse-y ()
-declare rand()
-declare atan2(x y)
-declare cos(x y)
-declare sin(x y)
-declare remove(xs i)
+import("demo/declarations")
 
 let mouse-left := 1
 
@@ -29,13 +16,8 @@ fun make-rect(x y w h) {
   #[:x x :y y :width w :height h]
 }
 
-fun make-player(x y) {
-  make-rect(x y 16 16)
-}
-
-fun make-enemy(x y) {
-  make-rect(x y 16 16)
-}
+fun make-player(x y) { make-rect(x y 16 16) }
+fun make-enemy(x y) { make-rect(x y 16 16) }
 
 fun make-bullet(x y direction dt) {
   let self := make-rect(x y 8 8)
@@ -89,10 +71,7 @@ fun spawn-enemy() {
 }
 
 fun update-enemy(enemy dt) {
-  let dir := atan2(
-    player.:y - enemy.:y
-    player.:x - enemy.:x
-  )
+  let dir := atan2(player.:y - enemy.:y player.:x - enemy.:x)
 
   let dx := cos(dir) * dt * 100.0
   let dy := sin(dir) * dt * 100.0
@@ -100,10 +79,6 @@ fun update-enemy(enemy dt) {
   enemy.:x <- enemy.:x + dx
   enemy.:y <- enemy.:y + dy
 }
-
-on-load(fun _() {
-
-})
 
 on-update(fun _(dt) {
   update-player(dt)

@@ -1,3 +1,5 @@
 import("examples/tests2")
+import("examples/tests3")
 
 from-test2()
+from-test3()

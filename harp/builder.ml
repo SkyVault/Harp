@@ -32,6 +32,9 @@ let parse_file path =
   |> Parser.parse
 
 let build_file path =
+  let lua_prelude = Common.read_whole_file "luastd/std.lua" in
+  let lua_range = Common.read_whole_file "luastd/range.lua" in
+
   let ast = parse_file path in
   let imports = get_imports ast in
 
@@ -62,7 +65,7 @@ let build_file path =
       let (ast, state) = analyze_ast ast { std with env = List.append std.env envs } in
 
       let main = ast |> Luagen.ast_to_lua in
-      let final = List.append (List.map (fun a -> Luagen.ast_to_lua ~ret:false a) asts) [main] in
+      let final = List.append (List.map (fun a -> Luagen.ast_to_lua ~ret:false a) asts) [lua_range; lua_prelude; main] in
       (final |> Common.cat_strings, state)
 
 let build_project entry_path =

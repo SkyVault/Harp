@@ -1,0 +1,7 @@
+#!/bin/bash
+
+dune build bin/harp.exe && ./_build/default/bin/harp.exe build demo
+
+mv demo/.cache/bundle.lua demo/.cache/main.lua
+love demo/.cache
+mv demo/.cache/main.lua demo/.cache/bundle.lua
