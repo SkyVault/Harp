@@ -46,12 +46,12 @@ and fun_call_to_lua it atom args =
     | [] -> build
   in
     match (atom, args) with
+    | (AtomValue (_, "import"), _) -> ""
     | (AtomValue (_, a), List ns) ->
       (* NOTE: We need to prepend return to the last value in the progn *)
       let args_str = (args_loop ns []) |> reverse |> cat_strings in
       sprintf "%s(%s)" (ident_to_lua a) args_str
     | _ -> failwith "fun_to_lua malformed function"
-
 
 and if_to_lua it expr progn else' ~value =
   match progn with
@@ -149,6 +149,7 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | Dict es -> dict_to_lua it es
   | Declaration _ -> ""
   | Progn ns -> progn_to_lua it ns ~ret:true |> fn_wrap
+  | Terminal -> ""
   | _ -> failwith (sprintf "Unhandled node type in expr_to_lua: (%s)" (Ast.to_str expr))
 
 and progn_to_lua it (ns : node list) ~ret : string =
@@ -163,10 +164,8 @@ and progn_to_lua it (ns : node list) ~ret : string =
         (handle_last_val_in_progn it last)
       else (expr_to_lua it last)) |> String.trim
 
-let ast_to_lua (ast : Ast.node) : string =
+let ast_to_lua ?ret:(ret=true) (ast : Ast.node)  : string =
   let it = { indent = 0; scope_top = []; is_expr = false } in
-
-  let pre = "require \"../luastd/range\"\nrequire \"../luastd/std\"\n" in
   match ast with
-  | Progn ns -> sprintf "%s\n%s\n" pre (progn_to_lua it ns ~ret:true)
+  | Progn ns -> progn_to_lua it ns ~ret
   | _ -> failwith "Ast to lua expects a progn at the top"

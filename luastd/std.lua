@@ -10,6 +10,17 @@ end
 
 read = io.read
 
+love = love ~= nil and love or {
+  graphics = { rectangle = function(t, x, y, w, h) end },
+  keyboard = {
+    isDown = function(k) return false end
+  },
+  mouse = {
+    getX = function() return 0 end,
+    getY = function() return 0 end,
+  },
+}
+
 _G.on_load = function(fn)
   function love.load()
     fn()

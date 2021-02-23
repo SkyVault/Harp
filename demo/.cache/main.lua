@@ -109,7 +109,7 @@ bullet["x"] = (bullet["x"] + (bullet["vx"] * dt));
 bullet["y"] = (bullet["y"] + (bullet["vy"] * dt));
 end
  bullets = filter( function( b)
-return (b["life"] >= 0.0)
+return (b["life"] <= 0.0)
 end, bullets);
  if (timer > max_timer) then
 spawn_enemy()

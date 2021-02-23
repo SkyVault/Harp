@@ -20,7 +20,8 @@ type vardef =
     v : vartype; }
 
 type state =
-  { env : vardef list }
+  { env : vardef list
+  ; imports : string list }
 
 let mk_vardef n = { ident = n; t = Any; v = VarAny }
 let mk_vardef_t n t' = { ident = n; t = t'; v = VarAny }
@@ -54,29 +55,42 @@ let rec var_defined env name =
 let rec analyze_expr (state : state) (expr : node) : (node * state) =
   match expr with
   | Declaration (name, arity) ->
-    (Declaration (name, arity), { env = (mk_fundef name arity)::state.env })
+    (Declaration (name, arity), { state with env = (mk_fundef name arity)::state.env })
   | LetExpr (AtomValue (info, name), value) ->
     let (node, state') = analyze_expr state value in
     (LetExpr (AtomValue (info, name), node),
-      { env = (mk_vardef name)::state'.env })
+      { state with env = (mk_vardef name)::state'.env })
   | IfExpr (expr, Progn ifTrue, Some (Progn ifFalse)) ->
-    let a = analyze_node_list state ifTrue in
-    let b = analyze_node_list state ifFalse in
+    let (a, _) = analyze_node_list state ifTrue in
+    let (b, _) = analyze_node_list state ifFalse in
     (IfExpr (analyze_equality state expr, Progn a, Some (Progn b)), state)
   | IfExpr (expr, (Progn ifTrue), None) ->
-    let a = analyze_node_list state ifTrue in
+    let (a, _) = analyze_node_list state ifTrue in
     (IfExpr (analyze_equality state expr, Progn a, None), state)
   | Fun (atom, List args, Progn ns) ->
     let vals = args |> List.map atom_to_vardef in
     let vardef = mk_fundef (atom_to_str atom) (List.length args) in
-    let func_state = { env = (List.append state.env (vardef::vals)) } in
-    let new_state = { env = vardef::state.env } in
-    (Fun (atom, List args, Progn (analyze_node_list func_state ns)), new_state)
-  | List ns -> (List (analyze_node_list state ns), state)
+    let func_state = { state with env = (List.append state.env (vardef::vals)) } in
+    let new_state = { state with env = vardef::state.env } in
+    let (node, _) = analyze_node_list func_state ns in
+    (Fun (atom, List args, Progn node), new_state)
+  | List ns ->
+    let (node, _) = analyze_node_list state ns in
+    (List node, state)
   | Dot (a, b) ->
     let (a', state') = (analyze_expr state a) in
     let (b', state') = (analyze_expr state' b) in
     (Dot (a', b'), state')
+
+  (* handle the import function *)
+  | FunCall (AtomValue (info, "import"), List ps) -> begin
+    match ps with
+    | AtomValue (_, file)::[] ->
+      (Terminal, { state with imports = file::state.imports })
+    | StrValue file::[] ->
+      (Terminal, { state with imports = file::state.imports })
+    | _ -> Common.log_error info "Import expects the name of the module"
+  end
   | FunCall (AtomValue (info, atom), List ps) ->
     if not (var_defined state.env atom)
     then Common.log_error info (sprintf "function '%s' is undefined" atom)
@@ -87,15 +101,20 @@ let rec analyze_expr (state : state) (expr : node) : (node * state) =
         let passed = (List.length ps) in
         if a.arity <> passed
         then Common.log_error info (sprintf "Wrong number of arguments for function '%s', got %d but expected %d" atom passed a.arity)
-        else (FunCall (AtomValue (info, atom), List (analyze_node_list state ps)), state)
+        else begin
+          let (node, _) = analyze_node_list state ps in
+          (FunCall (AtomValue (info, atom), List node), state)
+        end
       | Some {ident = _; t = _; v = VarAny } ->
         (* TODO(Dustin): Arity check on passed functions *)
-        (FunCall (AtomValue (info, atom), List (analyze_node_list state ps)), state)
+        let (ns, _) = analyze_node_list state ps in
+        (FunCall (AtomValue (info, atom), List ns), state)
       | None | _ -> failwith (sprintf "Failed to get function '%s' from env" atom)
     end
   | Each (AtomValue (info, name), range, Progn ns) ->
-    let new_state = { env = (mk_vardef name)::state.env } in
-    (Each (AtomValue (info, name), analyze_equality state range, Progn (analyze_node_list new_state ns)), state)
+    let new_state = { state with env = (mk_vardef name)::state.env } in
+    let (node, _) = analyze_node_list new_state ns in
+    (Each (AtomValue (info, name), analyze_equality state range, Progn node), state)
   | eq -> (analyze_equality state eq, state)
 
 and analyze_equality state eq =
@@ -141,21 +160,17 @@ and analyze_primary state prim =
     else prim
   | v -> v
 
-and analyze_node_list (state : state) (ns : node list) : node list =
+and analyze_node_list (state : state) (ns : node list) : node list * state =
   match ns with
   | expr::rest ->
     let (head, state') = analyze_expr state expr in
-    head::(analyze_node_list state' rest)
-  | _ -> ns
+    let (nodes, state') = (analyze_node_list state' rest) in
+    (head::nodes, state')
+  | _ -> (ns, state)
 
-let analyze_ast = function
-  | Progn ns -> Progn (analyze_node_list { env = [
-      (mk_fundef "print" 1);
-      (mk_fundef "range" 2);
-      (mk_fundef "push" 2);
-      (mk_fundef "remove" 2);
-      (mk_fundef "len" 1);
-      (mk_fundef "nth" 2);
-      (mk_fundef "read" 0);
-    ] } ns)
-  | _ -> failwith "analyze ast expects a progn"
+let analyze_ast (node : Ast.node) (state : state) : (Ast.node * state) =
+    match node with
+    | Progn ns ->
+      let (node, state') = analyze_node_list state ns in
+      (Progn node, state')
+    | _ -> failwith "analyze ast expects a progn"
