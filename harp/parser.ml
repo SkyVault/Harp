@@ -68,7 +68,7 @@ and parse_while_expr (ts: token list): Ast.node * token list =
     let (progn, rest') = parse_progn rest' in
     (While (expr, progn), rest')
 
-and parse_each_expr (ts: token list): Ast.node * token list =
+and parse_each_expr i (ts: token list): Ast.node * token list =
   match ts with
   | (TAtom ident,_)::(TAtom "in",_)::rest -> begin
     let (range, rest') = parse_expr rest in
@@ -78,7 +78,8 @@ and parse_each_expr (ts: token list): Ast.node * token list =
       (Each (AtomValue (i, ident), range, progn), rest')
     | _ -> failwith "Each is missing body"
   end
-  | _ -> failwith "Each requires an ident and the in keyword"
+  | _ ->
+    log_error i "Each requires an ident and the 'in' keyword"
 
 and parse_fun_def (ts: token list): Ast.node * token list =
   match ts with
@@ -179,7 +180,7 @@ and parse_expr_2 (ts: token list): Ast.node * token list =
   | (TAtom "let", _)::rest -> parse_let_expr rest
   | (TAtom "if", _)::rest -> parse_if_expr rest
   | (TAtom "while", _)::rest -> parse_while_expr rest
-  | (TAtom "each", _)::rest -> parse_each_expr rest
+  | (TAtom "each", i)::rest -> parse_each_expr i rest
   | (TAtom "fun", _)::rest -> parse_fun_def rest
   | (TAtom "declare", _)::rest -> parse_declaration rest
   | (TAtom "#",_)::(TOpenBracket,i)::rest ->

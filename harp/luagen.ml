@@ -83,17 +83,17 @@ and while_to_lua it expr progn ~value =
   end
   | _ -> failwith "if_to_lua expects a progn"
 
-and each_to_lua it ident range progn ~value =
+and each_to_lua it ident iterable progn ~value =
   match (ident, progn) with
   | (AtomValue (_, i), Progn ns) -> begin
-    match range with
-    | AtomValue _ | Range _ ->
-      let inner = sprintf "for %s in iter(%s) do\n%s\nend" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false) in
-      if value then fn_wrap inner else inner
+    let body = fn_wrap (progn_to_lua it ns ~ret:false) in
+    match iterable with
     | List _ ->
-      let inner = sprintf "for _,%s in ipairs(%s) do\n%s\nend" i (expr_to_lua it range) (progn_to_lua it ns ~ret:false) in
+      let inner = sprintf "for _,%s in ipairs(%s) do\n%s\nend" i (expr_to_lua it iterable) body in
       if value then fn_wrap inner else inner
-    | _ -> failwith "Can't iterate the value in each"
+    | _ ->
+      let inner = sprintf "for %s in iter(%s) do\n%s\nend" i (expr_to_lua it iterable) body in
+      if value then fn_wrap inner else inner
   end
   | _ -> failwith "Each expected an identifier"
 

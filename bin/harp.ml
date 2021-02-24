@@ -19,6 +19,6 @@ let () =
     write_lua_to_cache pname bundle
   | _::script::[] ->
     let bundle = Builder.build_project script in
-    printf "%s" bundle;
+    printf "%s\n\n" bundle;
     bundle |> Common.write_string_to_file "bundle.lua"
   | _ -> ()

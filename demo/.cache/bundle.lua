@@ -92,6 +92,10 @@ end
 atan2 = math.atan2
 sin = math.sin
 cos = math.cos
+
+mod = function(n, v)
+  return n % v
+end
  local mouse_left = 1.0;
  local filter = nil
 filter = function( fn, xs)
@@ -187,9 +191,6 @@ return (function()
 enemy["y"] = (enemy["y"] + dy);
 end)()
 end
- on_load( function()
-
-end)
  on_update( function( dt)
 update_player( dt)
  for enemy in iter(enemies) do

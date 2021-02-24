@@ -50,6 +50,7 @@ let build_file path =
       (mk_fundef "len" 1);
       (mk_fundef "nth" 2);
       (mk_fundef "read" 0);
+      (mk_fundef "mod" 2);
       (mk_fundef "import" 1) ]
     ; imports = [] }
   in

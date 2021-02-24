@@ -56,3 +56,7 @@ end
 atan2 = math.atan2
 sin = math.sin
 cos = math.cos
+
+mod = function(n, v)
+  return n % v
+end

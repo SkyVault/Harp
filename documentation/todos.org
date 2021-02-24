@@ -19,7 +19,10 @@ let myDict := #[ :hello 32 :world 123 ]
 + Pipe operator
   this one should have greater presidence then equality but less then the reassignment operator
 
-+ #use("file")
++ [DONE] import("file")
+
++ Make this work:
+  myList.(1).(1)
 
 * Typesystem
 
