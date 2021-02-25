@@ -49,6 +49,14 @@ is_mouse_down = love.mouse.isDown
 get_mouse_x = love.mouse.getX
 get_mouse_y = love.mouse.getY
 
+index = function(xs, at)
+  if type(at) == "number" then
+    return xs[at + 1]
+  else
+    return xs[at]
+  end
+end
+
 rand = function()
   return math.random()
 end

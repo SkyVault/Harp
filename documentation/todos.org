@@ -14,8 +14,11 @@ let myDict := #[ :hello 32 :world 123 ]
   #+END_SRC
 
 + [DONE] Array indexing
+
 + [DONE] Elif
+
 + Case of
+
 + Pipe operator
   this one should have greater presidence then equality but less then the reassignment operator
 

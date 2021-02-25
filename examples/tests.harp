@@ -1,17 +1,7 @@
-fun filter(xs test) {
-  let res := []
-  each item in xs {
-    if test(item) { push(res item) }
-  }
-  res
-}
+let myList := [1 2 3]
 
-fun get-evens(min max) {
-  let list := []
-  each i in min..max { push(list i) }
-  filter(list fun _(i) { mod(i 2) = 0 })
-}
+print(myList.(0))
 
-each i in :helloworld {
-  print(i)
-}
+let myDict := #[:hello "world"]
+
+print(myDict.:hello)

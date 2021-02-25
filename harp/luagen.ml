@@ -132,7 +132,7 @@ and expr_to_lua ?value:(is_value=false) it (expr : node) : string =
   | Term (t, a, b) -> expr_ab a (term_to_str t) b
   | Factor (t, a, b) -> expr_ab a (factor_to_str t) b
   | Unary (u, a) -> sprintf "(%s%s)" (unary_to_str u) (expr_to_lua it a)
-  | Dot (a, b) -> sprintf "%s[%s]" (expr_to_lua it a) (expr_to_lua it b)
+  | Dot (a, b) -> sprintf "index(%s,%s)" (expr_to_lua it a) (expr_to_lua it b)
   | Range (min, max) -> sprintf "range(%s, %s)" (expr_to_lua it min) (expr_to_lua it max)
   | AtomValue (_, a) -> ident_to_lua a
   | LetExpr (ident, expr') ->
