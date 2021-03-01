@@ -1,0 +1,7 @@
+fun generate-numbers(min max) {
+  let res := []
+  each i in min..max {
+    push(res i)
+  }
+  res
+}

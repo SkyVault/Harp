@@ -68,3 +68,12 @@ cos = math.cos
 mod = function(n, v)
   return n % v
 end
+
+std_print = print
+print = function(it)
+  io.write(it)
+end
+
+println = function(it)
+  io.write(it, "\n")
+end

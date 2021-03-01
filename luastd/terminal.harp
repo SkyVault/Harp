@@ -1,0 +1,17 @@
+;; The ansi terminal library for the Harp programming language
+
+;;; Clear the terminal output
+
+let red := "\u001b[31m"
+
+fun term-clear() {
+
+}
+
+fun set-color(color) {
+    print(color)
+}
+
+fun clear-color() {
+    print("\u001b[0m")
+}

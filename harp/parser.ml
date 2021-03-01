@@ -285,8 +285,8 @@ and parse_primary (ts: token list): Ast.node * token list =
     | (TCloseParen,_)::rest' -> (n, rest')
     | _ -> failwith "Unbalanced parenthises"
   end
-  | (t,_)::_ ->
-     failwith (sprintf "Illegal primary token '%s'" (tok_to_str t))
+  | (t,i)::_ ->
+    log_error i (sprintf "Illegal terminal token '%s'" (tok_to_str t))
   | _ -> failwith "Empty list"
 
 let parse (ts: token list): Ast.node =

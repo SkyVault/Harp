@@ -15,24 +15,15 @@ end
 
 function iter(it)
   if type(it) == "function" then return it
-  elseif type(it) == "string" then
-    return toiter(coroutine.create(function ()
-      for i=1, #it do
-        local v = it[i]
-        coroutine.yield(v)
-      end
-    end))
-  elseif type(it) == "table" then
+  elseif type(it) == "table" or type(it) == "string" then
     return toiter(coroutine.create(function ()
       for _, v in ipairs(it) do
+        print(it)
         coroutine.yield(v)
       end
     end))
   end
-end
-
-for i in iter("Hello") do
-  print(i)
+  assert(false)
 end
  push = table.insert
 remove = table.remove
@@ -85,6 +76,14 @@ is_mouse_down = love.mouse.isDown
 get_mouse_x = love.mouse.getX
 get_mouse_y = love.mouse.getY
 
+index = function(xs, at)
+  if type(at) == "number" then
+    return xs[at + 1]
+  else
+    return xs[at]
+  end
+end
+
 rand = function()
   return math.random()
 end
@@ -96,14 +95,25 @@ cos = math.cos
 mod = function(n, v)
   return n % v
 end
+
+std_print = print
+print = function(it)
+  io.write(it)
+end
+
+println = function(it)
+  io.write(it, "\n")
+end
  local mouse_left = 1.0;
  local filter = nil
 filter = function( fn, xs)
 local ns = {};
  for i in iter(range(0.0, (len( xs) - 1.0))) do
+(function()
 if fn( xs[(len( xs) - i)]) then
 push( ns, xs[i])
 end
+end)()
 end
 return ns
 end
@@ -194,11 +204,15 @@ end
  on_update( function( dt)
 update_player( dt)
  for enemy in iter(enemies) do
+(function()
 update_enemy( enemy, dt)
+end)()
 end
  for bullet in iter(bullets) do
+(function()
 bullet["x"] = (bullet["x"] + (bullet["vx"] * dt));
 bullet["y"] = (bullet["y"] + (bullet["vy"] * dt));
+end)()
 end
  bullets = filter( function( b)
 return (b["life"] <= 0.0)
@@ -217,12 +231,16 @@ set_color( 1.0, 1.0, 1.0, 1.0)
  draw_rect( "fill", player["x"], player["y"], player["width"], player["height"])
  set_color( 1.0, 0.0, 0.0, 1.0)
  for enemy in iter(enemies) do
+(function()
 draw_rect( "fill", enemy["x"], enemy["y"], enemy["width"], enemy["height"])
+end)()
 end
  set_color( 1.0, 1.0, 1.0, 1.0)
 return (function()
 for bullet in iter(bullets) do
+(function()
 draw_rect( "fill", bullet["x"], bullet["y"], bullet["width"], bullet["height"])
+end)()
 end
 end)()
 end)

@@ -1,7 +1,7 @@
-let myList := [1 2 3]
+import("luastd/lists")
 
-print(myList.(0))
+let my-list := [1 2 3]
 
-let myDict := #[:hello "world"]
-
-print(myDict.:hello)
+each i in :hello-world {
+  println(i)
+}
