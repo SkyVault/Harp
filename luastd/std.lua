@@ -71,9 +71,15 @@ end
 
 std_print = print
 print = function(it)
-  io.write(it)
+  io.write(tostring(it))
 end
 
 println = function(it)
-  io.write(it, "\n")
+  io.write(tostring(it), "\n")
 end
+
+stri = function(s, i)
+  return s:sub(i, i)
+end
+
+strcat = function(a, b) return a .. b end

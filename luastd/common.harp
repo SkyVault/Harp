@@ -1,0 +1,51 @@
+;; Common functions for harp
+
+;;; Takes a string and returns a list of words separated by the match
+;;; Ex. "A,B,C" -> ["A" "B" "C"]
+fun split-string-by (str match) {
+  let splits := []
+  let builder := ""
+  each ch in str {
+    if ch = match {
+      push(splits builder)
+      builder <- ""
+    } else {
+      builder <- strcat(builder ch)
+    }
+  }
+  if len(builder) > 0 { push(splits builder) }
+  splits
+}
+
+;;; Takes a list and returns the list in reversed order
+;;; Ex. [1 2 3] -> [3 2 1]
+fun reverse(xs) {
+  let rev := []
+  each i in 0..len(xs) {
+    push(rev xs.(len(xs) - i))
+  }
+  rev
+}
+
+;;; Combines two list
+;;; Ex. [1 2] [3 4] -> [1 2 3 4]
+fun list-merge(a b) {
+  each val in b { push(a val) }
+  a
+}
+
+fun filter(xs fn) {
+  let res := []
+  each val in xs {
+    if fn(val) { push(res val) }
+  }
+  res
+}
+
+fun map(xs fn) {
+  let res := []
+  each val in xs {
+    push(res fn(val))
+  }
+  res
+}

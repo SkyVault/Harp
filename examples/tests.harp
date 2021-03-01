@@ -1,7 +1,34 @@
 import("luastd/lists")
+import("luastd/common")
 
-let my-list := [1 2 3]
+;; FORTH-like
 
-each i in :hello-world {
-  println(i)
+let test-code := "1 2 3 +"
+
+let dict := #[]
+let stack := #[]
+
+each split in split-string-by(test-code " ") {
+  push(stack split)
+}
+
+let my-list-of-numbers := [1 2 3 4 5 6 7]
+
+each item in reverse(my-list-of-numbers) {
+  print(item) print(" ")
+}
+
+println("")
+each item in list-merge([1 2] [3 4]) {
+  print(item) print(" ")
+}
+
+println("")
+each item in filter([1 2 3 4 5 6 7 8] fun _(a) { mod(a 2) = 0 }) {
+  print(item) print(" ")
+}
+
+println("")
+each item in map([1 2 3 4 5 6 7 8] fun _(a) { a * 2 }) {
+  print(item) print(" ")
 }

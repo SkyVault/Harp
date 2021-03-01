@@ -52,7 +52,9 @@ let build_file path =
       (mk_fundef "nth" 2);
       (mk_fundef "read" 0);
       (mk_fundef "mod" 2);
-      (mk_fundef "import" 1) ]
+      (mk_fundef "import" 1);
+      (mk_fundef "stri" 2);
+      (mk_fundef "strcat" 2) ]
     ; imports = [] }
   in
     let states = asts

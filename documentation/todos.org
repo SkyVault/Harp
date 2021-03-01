@@ -27,6 +27,9 @@ let myDict := #[ :hello 32 :world 123 ]
 + Make this work:
   myList.(1).(1)
 
++ make values as statements an error, example: a = 32
+  the a = 32 part is an error, the user wanted to do a <- 32, the lua gets compile to a == 32 which is a expression used at the statement level
+
 * Typesystem
 
 * Environment
